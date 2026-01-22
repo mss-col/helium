@@ -1,0 +1,140 @@
+# =============================================================================
+# ADBLOCK PROVIDERS LIST - Active Maintainers (Updated within 3 months)
+# Reference: NextDNS Adblock Provider Format
+# Generated: 2026-01-22
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# TIER 1: GLOBAL/UNIVERSAL (High Traffic - Updated Daily)
+# -----------------------------------------------------------------------------
+
+# HaGeZi Series (github.com/hagezi/dns-blocklists)
+HaGeZi_Ultimate="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/ultimate.txt"
+HaGeZi_ProPlus="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.plus.txt"
+HaGeZi_Pro="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt"
+HaGeZi_Normal="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/multi.txt"
+HaGeZi_Light="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/light.txt"
+
+# 1Hosts Series (github.com/badmojr/1Hosts)
+OneHosts_Xtra="https://o0.pages.dev/Xtra/hosts.txt"
+OneHosts_Lite="https://o0.pages.dev/Lite/hosts.txt"
+
+# OISD (oisd.nl)
+OISD_Big="https://big.oisd.nl/domainswild"
+OISD_Small="https://small.oisd.nl/domainswild"
+
+# hBlock (hblock.molinero.dev)
+hBlock="https://hblock.molinero.dev/hosts"
+
+# AdGuard Series (github.com/AdguardTeam)
+AdGuard_DNS="https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
+AdGuard_Base="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt"
+AdGuard_Tracking="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt"
+AdGuard_Mobile="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt"
+AdGuard_Social="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt"
+
+# EasyList Series (easylist.to)
+EasyList="https://easylist.to/easylist/easylist.txt"
+EasyPrivacy="https://easylist.to/easylist/easyprivacy.txt"
+Fanboy_Annoyance="https://secure.fanboy.co.nz/fanboy-annoyance.txt"
+Fanboy_Social="https://easylist.to/easylist/fanboy-social.txt"
+Fanboy_Cookie="https://secure.fanboy.co.nz/fanboy-cookiemonster.txt"
+
+# Steven Black (github.com/StevenBlack/hosts)
+StevenBlack="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+
+# Other Global
+Anudeep_Blacklist="https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt"
+DanPollock="https://someonewhocares.org/hosts/hosts"
+PeterLowe="https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0"
+NoTrack="https://gitlab.com/quidsup/notrack-blocklists/-/raw/master/notrack-blocklist.txt"
+
+# -----------------------------------------------------------------------------
+# TIER 2: REGIONAL - ASIA
+# -----------------------------------------------------------------------------
+
+# Chinese
+AntiAD="https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt"
+AntiAD_Easylist="https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-easylist.txt"
+EasyList_China="https://easylist-downloads.adblockplus.org/easylistchina.txt"
+
+# Vietnamese
+ABPVN="https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt"
+HostsVN="https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts"
+
+# Japanese
+Blocker280="https://280blocker.net/files/280blocker_adblock.txt"
+
+# Korean
+YousList="https://raw.githubusercontent.com/yous/YousList/master/youslist.txt"
+
+# Indonesian
+ABPindo="https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt"
+
+# -----------------------------------------------------------------------------
+# TIER 3: REGIONAL - EUROPE
+# -----------------------------------------------------------------------------
+
+# Russian
+RU_AdList="https://easylist-downloads.adblockplus.org/advblock.txt"
+AdGuard_Russian="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_1_Russian/filter.txt"
+
+# French
+Liste_FR="https://easylist-downloads.adblockplus.org/liste_fr.txt"
+
+# German
+EasyList_Germany="https://easylist.to/easylistgermany/easylistgermany.txt"
+
+# Swedish
+Frellwit_Swedish="https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Hosts-File.txt"
+
+# Polish
+CertyficateIT="https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-adblock-filters/adblock.txt"
+
+# Hebrew
+EasyList_Hebrew="https://raw.githubusercontent.com/easylist/EasyListHebrew/master/EasyListHebrew.txt"
+
+# Hungarian
+Hufilter="https://cdn.jsdelivr.net/gh/hufilter/hufilter@master/hufilter-dns.txt"
+
+# Czech/Slovak
+EasyList_CzechSlovak="https://raw.githubusercontent.com/tomasko126/easylistczechandslovak/master/filters.txt"
+
+# Arabic
+Liste_AR="https://easylist-downloads.adblockplus.org/Liste_AR.txt"
+
+# Dutch
+EasyList_Dutch="https://easylist-downloads.adblockplus.org/easylistdutch.txt"
+
+# Italian
+EasyList_Italy="https://easylist-downloads.adblockplus.org/easylistitaly.txt"
+
+# Lithuanian
+EasyList_Lithuania="https://easylist-downloads.adblockplus.org/easylistlithuania.txt"
+
+# Finnish
+Finnish_Easylist="https://raw.githubusercontent.com/finnish-easylist-addition/finnish-easylist-addition/gh-pages/Finland_adb.txt"
+
+# Bulgarian
+Bulgarian_List="http://stanev.org/abp/adblock_bg.txt"
+
+# -----------------------------------------------------------------------------
+# TIER 4: SPECIALIZED
+# -----------------------------------------------------------------------------
+
+# Block Google Services
+NoGoogle="https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt"
+
+# Smart TV Blocklist
+Perflyst_SmartTV="https://perflyst.github.io/PiHoleBlocklist/SmartTV.txt"
+
+# -----------------------------------------------------------------------------
+# INACTIVE/ABANDONED (>3 months - Reference Only)
+# -----------------------------------------------------------------------------
+
+#Energized_Basic="https://github.com/EnergizedProtection/block"
+#Lightswitch05="https://www.github.developerdan.com/hosts"
+#GoodbyeAds="https://github.com/jerryn70/GoodbyeAds"
+#NoFacebook="https://github.com/jmdugan/blocklists"
+#Disconnect="https://disconnect.me"
+#MVPS_Hosts="https://winhelp2002.mvps.org/hosts.htm"

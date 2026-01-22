@@ -1,0 +1,1509 @@
+#!/bin/sh
+# =============================================================================
+# HELIUM - Universal DNS-based Ad Blocker
+# Version: 4.0.0 (Universal)
+# Author: Abi Darwish (Original) | Enhanced by MSS
+# Supports: Debian/Ubuntu Server & OpenWrt (QWRT/NSS-based)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CONFIGURATION
+# -----------------------------------------------------------------------------
+VERSION_NAME="Helium"
+VERSION_NUMBER="4.0.0"
+VERSION_SUFFIX="Universal"
+
+# Paths
+DNSMASQ_DIR="/etc/dnsmasq"
+PROVIDERS_FILE="${DNSMASQ_DIR}/providers.txt"
+ADBLOCK_HOSTS="${DNSMASQ_DIR}/adblock.hosts"
+WHITELIST_FILE="${DNSMASQ_DIR}/whitelist.hosts"
+BLACKLIST_FILE="${DNSMASQ_DIR}/blacklist.hosts"
+DEAD_HOSTS="${DNSMASQ_DIR}/dead.hosts"
+TEMP_LIST="${DNSMASQ_DIR}/list.tmp"
+
+# Remote URLs
+REMOTE_BASE="https://raw.githubusercontent.com/mss-col/helium/main"
+REMOTE_PROVIDERS="${REMOTE_BASE}/providers.txt"
+REMOTE_SCRIPT="${REMOTE_BASE}/helium"
+REMOTE_DNSMASQ_CONF="${REMOTE_BASE}/dnsmasq.conf"
+REMOTE_DEAD_HOSTS="${REMOTE_BASE}/dead.hosts"
+
+# Colors (ANSI escape codes)
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+WHITE="\033[1m"
+NOCOLOR="\033[0m"
+
+# Runtime variables (set by detect_environment)
+OS_TYPE=""
+INSTALL_PATH=""
+PUBLIC_IP=""
+
+# -----------------------------------------------------------------------------
+# UTILITY FUNCTIONS
+# -----------------------------------------------------------------------------
+
+# Print colored output
+print_color() {
+    color="$1"
+    message="$2"
+    printf "${color}%s${NOCOLOR}" "$message"
+}
+
+print_green() { print_color "$GREEN" "$1"; }
+print_red() { print_color "$RED" "$1"; }
+print_yellow() { print_color "$YELLOW" "$1"; }
+print_white() { print_color "$WHITE" "$1"; }
+
+# Print with newline
+println_green() { print_green "$1"; printf "\n"; }
+println_red() { print_red "$1"; printf "\n"; }
+println_yellow() { print_yellow "$1"; printf "\n"; }
+println_white() { print_white "$1"; printf "\n"; }
+
+# Clear screen properly
+clear_screen() {
+    clear
+    # Extra clear for OpenWrt terminals
+    printf '\033[3J'
+}
+
+# Print header
+print_header() {
+    println_green " ${VERSION_NAME} v${VERSION_NUMBER}"
+    print_white " by Abi Darwish"
+    if [ "$OS_TYPE" = "openwrt" ]; then
+        printf " ${YELLOW}[OpenWrt]${NOCOLOR}\n"
+    else
+        printf " ${YELLOW}[Linux]${NOCOLOR}\n"
+    fi
+}
+
+# Check if running as root
+check_root() {
+    if [ "$(id -u)" != "0" ]; then
+        println_red " Error: This script must be run as root"
+        exit 1
+    fi
+}
+
+# Check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Safe file download with retry
+download_file() {
+    url="$1"
+    output="$2"
+    max_retries=3
+    retry=0
+
+    while [ $retry -lt $max_retries ]; do
+        if command_exists wget; then
+            wget -q -O "$output" "$url" 2>/dev/null && return 0
+        elif command_exists curl; then
+            curl -sL -o "$output" "$url" 2>/dev/null && return 0
+        fi
+        retry=$((retry + 1))
+        sleep 1
+    done
+    return 1
+}
+
+# Get public IP address
+get_public_ip() {
+    ip -4 addr 2>/dev/null | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | awk '{print $1}' | head -1
+}
+
+# Confirm prompt (returns 0 for yes, 1 for no)
+confirm() {
+    prompt="$1"
+    default="${2:-n}"
+
+    printf " %s [y/n]: " "$prompt"
+    read -r response
+
+    case "$response" in
+        [yY]|[yY][eE][sS]) return 0 ;;
+        [nN]|[nN][oO]) return 1 ;;
+        "") [ "$default" = "y" ] && return 0 || return 1 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Wait for user input
+press_enter() {
+    printf " Press Enter to continue..."
+    read -r _
+}
+
+# -----------------------------------------------------------------------------
+# ENVIRONMENT DETECTION
+# -----------------------------------------------------------------------------
+
+detect_environment() {
+    # Detect OS type
+    if [ -f /etc/openwrt_release ]; then
+        OS_TYPE="openwrt"
+        INSTALL_PATH="/usr/sbin/helium"
+
+        # Check for supported OpenWrt variants
+        if grep -q "QWRT" /etc/openwrt_release 2>/dev/null; then
+            : # QWRT supported
+        elif lsmod 2>/dev/null | grep -q nss; then
+            : # NSS-based supported
+        else
+            println_yellow " Warning: Untested OpenWrt variant"
+        fi
+
+    elif [ -f /etc/debian_version ]; then
+        OS_TYPE="debian"
+        INSTALL_PATH="/usr/local/sbin/helium"
+
+    elif [ -f /etc/redhat-release ]; then
+        OS_TYPE="redhat"
+        INSTALL_PATH="/usr/local/sbin/helium"
+
+    elif [ -f /etc/os-release ]; then
+        # Generic Linux detection
+        OS_TYPE="linux"
+        INSTALL_PATH="/usr/local/sbin/helium"
+    else
+        println_red " Error: Unsupported operating system"
+        exit 1
+    fi
+
+    # Get public IP
+    PUBLIC_IP=$(get_public_ip)
+
+    # Validate environment
+    if ! command_exists dnsmasq && [ "$1" != "install" ]; then
+        # dnsmasq not installed, will be handled by install function
+        :
+    fi
+}
+
+# Check virtualization (Linux servers only)
+check_virtualization() {
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        if command_exists systemd-detect-virt; then
+            virt_type=$(systemd-detect-virt 2>/dev/null)
+            case "$virt_type" in
+                openvz)
+                    println_red " Error: OpenVZ is not supported"
+                    exit 1
+                    ;;
+                lxc)
+                    println_yellow " Warning: LXC detected - some features may be limited"
+                    ;;
+            esac
+        fi
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# SERVICE MANAGEMENT (OS-specific)
+# -----------------------------------------------------------------------------
+
+# Start dnsmasq service
+start_dnsmasq() {
+    case "$OS_TYPE" in
+        openwrt)
+            /etc/init.d/dnsmasq start >/dev/null 2>&1
+            /etc/init.d/dnsmasq enable >/dev/null 2>&1
+            ;;
+        *)
+            systemctl start dnsmasq >/dev/null 2>&1
+            systemctl enable dnsmasq >/dev/null 2>&1
+            ;;
+    esac
+}
+
+# Stop dnsmasq service
+stop_dnsmasq() {
+    case "$OS_TYPE" in
+        openwrt)
+            /etc/init.d/dnsmasq stop >/dev/null 2>&1
+            ;;
+        *)
+            systemctl stop dnsmasq >/dev/null 2>&1
+            ;;
+    esac
+}
+
+# Restart dnsmasq service
+restart_dnsmasq() {
+    case "$OS_TYPE" in
+        openwrt)
+            /etc/init.d/dnsmasq restart >/dev/null 2>&1
+            ;;
+        *)
+            systemctl restart dnsmasq >/dev/null 2>&1
+            ;;
+    esac
+}
+
+# Check if dnsmasq is running
+is_dnsmasq_running() {
+    case "$OS_TYPE" in
+        openwrt)
+            [ "$(/etc/init.d/dnsmasq status 2>/dev/null)" = "running" ]
+            ;;
+        *)
+            systemctl is-active dnsmasq >/dev/null 2>&1
+            ;;
+    esac
+}
+
+# Get dnsmasq uptime/status info
+get_dnsmasq_status() {
+    if is_dnsmasq_running; then
+        echo "running"
+    else
+        echo "stopped"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# PACKAGE MANAGEMENT (OS-specific)
+# -----------------------------------------------------------------------------
+
+install_packages() {
+    printf " Installing required packages..."
+
+    case "$OS_TYPE" in
+        openwrt)
+            # Check and install diffutils for diff command
+            if ! opkg list-installed 2>/dev/null | grep -q diffutils; then
+                opkg update >/dev/null 2>&1
+                if ! opkg install diffutils >/dev/null 2>&1; then
+                    # Fallback: try manual download for common architectures
+                    println_yellow "trying fallback..."
+                    arch=$(uname -m)
+                    case "$arch" in
+                        aarch64)
+                            download_file "https://mirror-03.infra.openwrt.org/releases/packages-24.10/aarch64_cortex-a53/packages/diffutils_3.10-r1_aarch64_cortex-a53.ipk" "/tmp/diffutils.ipk"
+                            opkg install /tmp/diffutils.ipk >/dev/null 2>&1
+                            rm -f /tmp/diffutils.ipk
+                            ;;
+                    esac
+                fi
+            fi
+            ;;
+        debian|ubuntu)
+            apt-get update >/dev/null 2>&1
+            apt-get install -y dnsmasq dnsutils curl >/dev/null 2>&1
+            # Optional packages (don't fail if unavailable)
+            apt-get install -y vnstat bc >/dev/null 2>&1 || true
+            ;;
+        redhat|centos|fedora)
+            if command_exists dnf; then
+                dnf install -y dnsmasq bind-utils curl >/dev/null 2>&1
+            else
+                yum install -y dnsmasq bind-utils curl >/dev/null 2>&1
+            fi
+            ;;
+        *)
+            println_yellow "skipped (unknown package manager)"
+            return 0
+            ;;
+    esac
+
+    println_green "done"
+}
+
+# -----------------------------------------------------------------------------
+# DNSMASQ CONFIGURATION (OS-specific)
+# -----------------------------------------------------------------------------
+
+# Configure dnsmasq to use adblock hosts
+configure_dnsmasq_adblock() {
+    case "$OS_TYPE" in
+        openwrt)
+            # Remove old config if exists
+            sed -i '/addn-hosts/d' /etc/dnsmasq.conf 2>/dev/null
+
+            # Check if QWRT (uses dnsmasq.conf directly)
+            if grep -q "QWRT" /etc/openwrt_release 2>/dev/null; then
+                echo "addn-hosts=${ADBLOCK_HOSTS}" >> /etc/dnsmasq.conf
+            else
+                # Standard OpenWrt uses UCI
+                uci -q delete dhcp.@dnsmasq[0].addnhosts
+                uci -q add_list dhcp.@dnsmasq[0].addnhosts="${ADBLOCK_HOSTS}"
+                uci commit dhcp
+            fi
+            ;;
+        *)
+            # Linux: Check if using custom dnsmasq.conf
+            if [ -f /etc/dnsmasq.conf ]; then
+                # Remove old entry and add new
+                sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf
+                echo "addn-hosts=${ADBLOCK_HOSTS}" >> /etc/dnsmasq.conf
+            fi
+            ;;
+    esac
+}
+
+# Remove dnsmasq adblock configuration
+remove_dnsmasq_adblock() {
+    case "$OS_TYPE" in
+        openwrt)
+            sed -i 's/^addn-hosts/#addn-hosts/' /etc/dnsmasq.conf 2>/dev/null
+            uci -q delete dhcp.@dnsmasq[0].addnhosts
+            uci commit dhcp 2>/dev/null
+            ;;
+        *)
+            sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf 2>/dev/null
+            ;;
+    esac
+}
+
+# Check if Helium adblock is active
+is_helium_active() {
+    case "$OS_TYPE" in
+        openwrt)
+            if grep -q "QWRT" /etc/openwrt_release 2>/dev/null; then
+                grep -q "^addn-hosts=${ADBLOCK_HOSTS}" /etc/dnsmasq.conf 2>/dev/null
+            else
+                uci -q get dhcp.@dnsmasq[0].addnhosts 2>/dev/null | grep -q "${ADBLOCK_HOSTS}"
+            fi
+            ;;
+        *)
+            grep -q "addn-hosts=${ADBLOCK_HOSTS}" /etc/dnsmasq.conf 2>/dev/null
+            ;;
+    esac
+}
+
+# Get current DNS server from dnsmasq config
+get_current_dns() {
+    if [ -f /etc/dnsmasq.conf ]; then
+        grep -E "^server=" /etc/dnsmasq.conf 2>/dev/null | head -1 | cut -d'=' -f2
+    else
+        echo "1.1.1.1"
+    fi
+}
+
+# Set DNS server in dnsmasq config
+set_dns_server() {
+    new_dns="$1"
+    old_dns=$(get_current_dns)
+
+    if [ -n "$old_dns" ] && [ -f /etc/dnsmasq.conf ]; then
+        sed -i "s/server=${old_dns}/server=${new_dns}/" /etc/dnsmasq.conf
+    fi
+}
+
+# Configure resolv.conf (Linux servers only)
+configure_resolv() {
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        # Backup original if not exists
+        [ ! -f /etc/resolv.conf.bak ] && cp /etc/resolv.conf /etc/resolv.conf.bak 2>/dev/null
+
+        # Point to local dnsmasq
+        echo "nameserver 127.0.0.1" > /etc/resolv.conf
+    fi
+}
+
+# Restore resolv.conf (Linux servers only)
+restore_resolv() {
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        if [ -f /etc/resolv.conf.bak ]; then
+            cp /etc/resolv.conf.bak /etc/resolv.conf
+        else
+            echo "nameserver 1.1.1.1" > /etc/resolv.conf
+        fi
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# CORE ENGINE
+# -----------------------------------------------------------------------------
+
+# Update blocked hostnames from providers
+update_engine() {
+    printf " Updating blocked hostnames..."
+
+    # Ensure directory exists
+    [ ! -d "$DNSMASQ_DIR" ] && mkdir -p "$DNSMASQ_DIR"
+
+    # Clear temp file
+    : > "$TEMP_LIST"
+
+    # Check if providers file exists
+    if [ ! -f "$PROVIDERS_FILE" ]; then
+        println_red "failed (providers.txt not found)"
+        return 1
+    fi
+
+    # Process each provider
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        case "$line" in
+            \#*|"") continue ;;
+        esac
+
+        # Extract URL from format: ProviderName="URL"
+        list_url=$(echo "$line" | cut -d'"' -f2)
+
+        [ -z "$list_url" ] && continue
+
+        # Download and process the list
+        if command_exists curl; then
+            curl -sL "$list_url" 2>/dev/null
+        elif command_exists wget; then
+            wget -qO- "$list_url" 2>/dev/null
+        fi | \
+            sed '/^!/d' | \
+            sed '/^#/d' | \
+            sed '/^$/d' | \
+            sed 's/||/0.0.0.0 /g' | \
+            sed 's/^127\.0\.0\.1 //g' | \
+            sed 's/^0\.0\.0\.0 //g' | \
+            awk -F'^' '{print $1}' | \
+            sed '/^$/d' | \
+            sed 's/^/0.0.0.0 /g' | \
+            grep "^0\.0\.0\.0" >> "$TEMP_LIST"
+
+    done < "$PROVIDERS_FILE"
+
+    # Add blacklisted hosts
+    if [ -f "$BLACKLIST_FILE" ] && [ -s "$BLACKLIST_FILE" ]; then
+        while IFS= read -r hostname || [ -n "$hostname" ]; do
+            [ -n "$hostname" ] && echo "0.0.0.0 ${hostname}" >> "$TEMP_LIST"
+        done < "$BLACKLIST_FILE"
+    fi
+
+    # Add IPv6 entries if IPv6 is enabled
+    if ip a 2>/dev/null | grep -q "inet6"; then
+        grep "^0\.0\.0\.0" "$TEMP_LIST" | sed 's/^0\.0\.0\.0/::1/g' >> "$TEMP_LIST"
+    fi
+
+    # Sort, deduplicate, and clean
+    cat "$TEMP_LIST" 2>/dev/null | \
+        sed '/^$/d' | \
+        sed '/^0\.0\.0\.0 0\.0\.0\.0/d' | \
+        sed '/^::1 0\.0\.0\.0/d' | \
+        sort -u > "$ADBLOCK_HOSTS"
+
+    # Apply whitelist
+    if [ -f "$WHITELIST_FILE" ] && [ -s "$WHITELIST_FILE" ]; then
+        while IFS= read -r hostname || [ -n "$hostname" ]; do
+            [ -n "$hostname" ] && sed -i "/${hostname}/d" "$ADBLOCK_HOSTS"
+        done < "$WHITELIST_FILE"
+    fi
+
+    # Cleanup
+    rm -f "$TEMP_LIST"
+
+    # Restart dnsmasq to apply changes
+    restart_dnsmasq
+
+    println_green "done"
+
+    # Show count
+    if [ -f "$ADBLOCK_HOSTS" ]; then
+        count=$(wc -l < "$ADBLOCK_HOSTS" | tr -d ' ')
+        printf " "
+        print_green "$count"
+        printf " hostnames have been blocked\n"
+    fi
+}
+
+# Clean dead/invalid hosts from database
+clean_dead_hosts() {
+    printf " Checking database..."
+
+    # Download dead hosts list if not exists or outdated
+    if [ ! -f "$DEAD_HOSTS" ]; then
+        download_file "$REMOTE_DEAD_HOSTS" "$DEAD_HOSTS"
+    fi
+
+    if [ ! -f "$DEAD_HOSTS" ] || [ ! -s "$DEAD_HOSTS" ]; then
+        println_yellow "skipped (no dead hosts list)"
+        return 0
+    fi
+
+    old_count=$(wc -l < "$ADBLOCK_HOSTS" 2>/dev/null | tr -d ' ')
+    old_count=${old_count:-0}
+
+    sleep 1
+
+    # Remove dead hosts
+    while IFS= read -r dead_host || [ -n "$dead_host" ]; do
+        [ -z "$dead_host" ] && continue
+        sed -i "/^0\.0\.0\.0 ${dead_host}$/d" "$ADBLOCK_HOSTS" 2>/dev/null
+        sed -i "/^::1 ${dead_host}$/d" "$ADBLOCK_HOSTS" 2>/dev/null
+        printf "\n ${dead_host}\t"
+        print_red "deleted"
+    done < "$DEAD_HOSTS"
+
+    new_count=$(wc -l < "$ADBLOCK_HOSTS" 2>/dev/null | tr -d ' ')
+    new_count=${new_count:-0}
+
+    deleted=$((old_count - new_count))
+
+    printf "\n "
+    print_green "$deleted"
+    printf " dead hostnames have been deleted from the database\n"
+
+    [ "$deleted" -gt 0 ] && restart_dnsmasq
+}
+
+# Get Helium status information
+print_helium_status() {
+    blocked_count=0
+    [ -f "$ADBLOCK_HOSTS" ] && blocked_count=$(wc -l < "$ADBLOCK_HOSTS" 2>/dev/null | tr -d ' ')
+
+    println_white " System Status"
+
+    if is_dnsmasq_running && is_helium_active; then
+        printf " %-25s : " "DNSMasq"
+        println_green "running"
+
+        current_dns=$(get_current_dns)
+        if [ -n "$current_dns" ]; then
+            printf " %-25s : " "DNS Server"
+            println_green "$current_dns"
+        fi
+
+        printf " %-25s : " "Blocked Hostnames"
+        println_green "$blocked_count"
+
+        # Show uptime on Linux
+        if [ "$OS_TYPE" != "openwrt" ]; then
+            active_since=$(systemctl status dnsmasq 2>/dev/null | sed -ne 's|^.*active (running).*; \(.*\)$|\1|p')
+            if [ -n "$active_since" ]; then
+                printf " %-25s : " "Active Since"
+                println_green "$active_since"
+            fi
+        fi
+    else
+        printf " %-25s : " "DNSMasq"
+        println_red "stopped"
+        printf " %-25s : " "Blocked Hostnames"
+        println_red "0"
+    fi
+}
+
+# Get machine information
+print_machine_info() {
+    println_white " Machine Info"
+
+    # CPU
+    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "model name|Model" | tail -1 | cut -d':' -f2 | sed 's/^ //' | cut -d' ' -f1-3)
+    cpu_cores=$(grep -c "^processor" /proc/cpuinfo 2>/dev/null || echo "1")
+
+    if [ "$cpu_cores" = "1" ]; then
+        printf " %-25s : " "CPU (single core)"
+    else
+        printf " %-25s : " "CPU (${cpu_cores} cores)"
+    fi
+    println_green "${cpu_model:-Unknown}"
+
+    # OS
+    if [ -f /etc/os-release ]; then
+        os_name=$(grep "PRETTY_NAME" /etc/os-release 2>/dev/null | cut -d'"' -f2)
+    else
+        os_name=$(uname -s)
+    fi
+    printf " %-25s : " "OS Version"
+    println_green "${os_name:-Unknown}"
+
+    # Kernel
+    kernel=$(uname -r)
+    printf " %-25s : " "Kernel Version"
+    println_green "$kernel"
+
+    # RAM
+    if command_exists free; then
+        ram_used=$(free -m 2>/dev/null | grep Mem: | awk '{print $3}')
+        ram_total=$(free -m 2>/dev/null | grep Mem: | awk '{print $2}')
+        if [ -n "$ram_used" ] && [ -n "$ram_total" ] && [ "$ram_total" -gt 0 ]; then
+            ram_percent=$((ram_used * 100 / ram_total))
+            printf " %-25s : " "RAM Usage"
+            println_green "${ram_used}MB / ${ram_total}MB (${ram_percent}%)"
+        fi
+    fi
+
+    # Uptime
+    if [ -f /proc/uptime ]; then
+        uptime_seconds=$(cut -d'.' -f1 /proc/uptime)
+        uptime_days=$((uptime_seconds / 86400))
+        uptime_hours=$(((uptime_seconds % 86400) / 3600))
+        uptime_mins=$(((uptime_seconds % 3600) / 60))
+
+        if [ "$uptime_days" -gt 0 ]; then
+            uptime_str="${uptime_days}d ${uptime_hours}h ${uptime_mins}m"
+        elif [ "$uptime_hours" -gt 0 ]; then
+            uptime_str="${uptime_hours}h ${uptime_mins}m"
+        else
+            uptime_str="${uptime_mins}m"
+        fi
+        printf " %-25s : " "Uptime"
+        println_green "$uptime_str"
+    fi
+
+    # IP Address
+    if [ -n "$PUBLIC_IP" ]; then
+        printf " %-25s : " "IP Address"
+        println_green "$PUBLIC_IP"
+    fi
+
+    # Bandwidth stats (Linux with vnstat only)
+    if [ "$OS_TYPE" != "openwrt" ] && command_exists vnstat; then
+        daily=$(vnstat -d --oneline 2>/dev/null | awk -F';' '{print $6}' | sed 's/ //')
+        monthly=$(vnstat -m --oneline 2>/dev/null | awk -F';' '{print $11}' | sed 's/ //')
+        if [ -n "$daily" ]; then
+            printf " %-25s : " "Daily Data Usage"
+            println_green "$daily"
+        fi
+        if [ -n "$monthly" ]; then
+            printf " %-25s : " "Monthly Data Usage"
+            println_green "$monthly"
+        fi
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# INSTALLATION FUNCTIONS
+# -----------------------------------------------------------------------------
+
+do_install() {
+    printf " Installing Helium...\n"
+
+    # Create directory
+    [ ! -d "$DNSMASQ_DIR" ] && mkdir -p "$DNSMASQ_DIR"
+
+    # Install packages
+    install_packages
+
+    # Handle systemd-resolved conflict (Linux only)
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        if command_exists systemctl && systemctl is-active systemd-resolved >/dev/null 2>&1; then
+            printf " Disabling systemd-resolved..."
+            systemctl disable systemd-resolved >/dev/null 2>&1
+            systemctl stop systemd-resolved >/dev/null 2>&1
+            [ -L /etc/resolv.conf ] && unlink /etc/resolv.conf
+            echo "nameserver 1.1.1.1" > /etc/resolv.conf
+            println_green "done"
+        fi
+    fi
+
+    # Configure dnsmasq
+    configure_dnsmasq_adblock
+
+    # Download providers list
+    printf " Downloading providers list..."
+    if download_file "$REMOTE_PROVIDERS" "$PROVIDERS_FILE"; then
+        println_green "done"
+    else
+        println_yellow "using default"
+        # Create minimal default providers
+        cat > "$PROVIDERS_FILE" << 'EOF'
+StevenBlack="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+HaGeZi_Pro="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt"
+EOF
+    fi
+
+    # Download dnsmasq.conf template (Linux only)
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        if [ ! -f /etc/dnsmasq.conf ] || ! grep -q "addn-hosts" /etc/dnsmasq.conf; then
+            printf " Downloading dnsmasq configuration..."
+            [ -f /etc/dnsmasq.conf ] && mv /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
+            if download_file "$REMOTE_DNSMASQ_CONF" "/etc/dnsmasq.conf"; then
+                # Replace placeholder IP
+                sed -i "s/YourPublicIP/${PUBLIC_IP}/" /etc/dnsmasq.conf 2>/dev/null
+                println_green "done"
+            else
+                println_yellow "skipped"
+                [ -f /etc/dnsmasq.conf.bak ] && mv /etc/dnsmasq.conf.bak /etc/dnsmasq.conf
+            fi
+        fi
+    fi
+
+    # Create empty whitelist/blacklist files
+    [ ! -f "$WHITELIST_FILE" ] && touch "$WHITELIST_FILE"
+    [ ! -f "$BLACKLIST_FILE" ] && touch "$BLACKLIST_FILE"
+
+    # Setup cron job (Linux only)
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        printf " Setting up daily update..."
+        # Download daily script
+        download_file "${REMOTE_BASE}/helium_daily.sh" "/usr/local/sbin/helium_daily" 2>/dev/null
+        chmod 755 /usr/local/sbin/helium_daily 2>/dev/null
+
+        # Add cron entry
+        sed -i '/helium_daily/d' /etc/crontab 2>/dev/null
+        echo "0 4 * * * root /usr/local/sbin/helium_daily # Helium" >> /etc/crontab 2>/dev/null
+        println_green "done"
+    fi
+
+    # Update blocklist
+    update_engine
+
+    # Configure resolv.conf (Linux only)
+    [ "$OS_TYPE" != "openwrt" ] && configure_resolv
+
+    # Start dnsmasq
+    start_dnsmasq
+
+    # Copy script to install path
+    script_path=$(readlink -f "$0" 2>/dev/null || echo "$0")
+    if [ "$script_path" != "$INSTALL_PATH" ]; then
+        cp "$script_path" "$INSTALL_PATH" 2>/dev/null
+        chmod 755 "$INSTALL_PATH" 2>/dev/null
+    fi
+
+    echo
+    println_green " Installation completed!"
+    printf " Type "
+    print_green "helium"
+    printf " to start\n"
+    echo
+}
+
+do_uninstall() {
+    printf " Uninstalling Helium..."
+
+    # Stop dnsmasq
+    stop_dnsmasq
+
+    # Remove configuration
+    remove_dnsmasq_adblock
+
+    # Remove files
+    rm -rf "$DNSMASQ_DIR"
+    rm -f "$INSTALL_PATH"
+
+    # Remove cron job (Linux only)
+    if [ "$OS_TYPE" != "openwrt" ]; then
+        sed -i '/helium/d' /etc/crontab 2>/dev/null
+        rm -f /usr/local/sbin/helium_daily
+    fi
+
+    # Restore resolv.conf (Linux only)
+    [ "$OS_TYPE" != "openwrt" ] && restore_resolv
+
+    # Restart dnsmasq without adblock
+    restart_dnsmasq
+
+    println_green "done"
+    echo
+}
+
+do_reinstall() {
+    printf " Reinstalling Helium...\n"
+    sleep 1
+
+    # Preserve custom lists
+    [ -f "$WHITELIST_FILE" ] && cp "$WHITELIST_FILE" /tmp/whitelist.hosts.bak
+    [ -f "$BLACKLIST_FILE" ] && cp "$BLACKLIST_FILE" /tmp/blacklist.hosts.bak
+
+    # Remove and reinstall
+    remove_dnsmasq_adblock
+    configure_dnsmasq_adblock
+
+    # Download fresh providers
+    download_file "$REMOTE_PROVIDERS" "$PROVIDERS_FILE"
+
+    # Restore custom lists
+    [ -f /tmp/whitelist.hosts.bak ] && mv /tmp/whitelist.hosts.bak "$WHITELIST_FILE"
+    [ -f /tmp/blacklist.hosts.bak ] && mv /tmp/blacklist.hosts.bak "$BLACKLIST_FILE"
+
+    # Update
+    update_engine
+
+    clear_screen
+    print_header
+    echo
+    println_green " Reinstallation completed!"
+    printf " Type "
+    print_green "helium"
+    printf " to start\n"
+    echo
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: START/STOP HELIUM
+# -----------------------------------------------------------------------------
+
+do_start() {
+    clear_screen
+    print_header
+    echo
+
+    if is_dnsmasq_running && is_helium_active; then
+        print_helium_status
+        echo
+        press_enter
+        return
+    fi
+
+    printf " Starting Helium..."
+
+    configure_dnsmasq_adblock
+    start_dnsmasq
+    [ "$OS_TYPE" != "openwrt" ] && configure_resolv
+
+    sleep 2
+    println_green "done"
+    echo
+    press_enter
+}
+
+do_stop() {
+    clear_screen
+    print_header
+    echo
+    print_helium_status
+    echo
+
+    if ! is_helium_active; then
+        printf " Helium is not active\n"
+        echo
+        press_enter
+        return
+    fi
+
+    if confirm "Do you want to stop Helium?"; then
+        printf " Stopping Helium..."
+        remove_dnsmasq_adblock
+        restart_dnsmasq
+        [ "$OS_TYPE" != "openwrt" ] && restore_resolv
+        sleep 2
+        println_green "done"
+    fi
+    echo
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: UPDATE DATABASE
+# -----------------------------------------------------------------------------
+
+do_update_database() {
+    clear_screen
+    print_header
+    echo
+    print_helium_status
+    echo
+
+    if ! is_helium_active; then
+        println_yellow " Helium is not active. Start Helium first."
+        echo
+        press_enter
+        return
+    fi
+
+    if confirm "Do you want to update blocked hostnames?"; then
+        update_engine
+    fi
+    echo
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: PROVIDER MANAGEMENT
+# -----------------------------------------------------------------------------
+
+show_providers_list() {
+    tmp_file="${PROVIDERS_FILE}.tmp"
+    [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
+
+    printf " ${WHITE}%-30s %12s${NOCOLOR}\n" "PROVIDER" "STATUS"
+    echo " ------------------------------------------"
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] && continue
+
+        # Check if commented (inactive)
+        case "$line" in
+            \#*)
+                provider_name=$(echo "$line" | sed 's/^#//' | cut -d'=' -f1)
+                printf " %-30s " "$provider_name"
+                println_red "inactive"
+                ;;
+            *)
+                provider_name=$(echo "$line" | cut -d'=' -f1)
+                printf " %-30s " "$provider_name"
+                println_green "active"
+                ;;
+        esac
+    done < "$tmp_file"
+}
+
+do_activate_provider() {
+    clear_screen
+    print_header
+    echo
+
+    if ! is_helium_active; then
+        print_helium_status
+        echo
+        press_enter
+        return
+    fi
+
+    tmp_file="${PROVIDERS_FILE}.tmp"
+    [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
+
+    show_providers_list
+    echo
+
+    # Check for changes
+    if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
+        printf " Select provider to activate (s=save, c=cancel): "
+    else
+        printf " Select provider to activate (c=cancel): "
+    fi
+    read -r selection
+
+    case "$selection" in
+        s|S)
+            mv "$tmp_file" "$PROVIDERS_FILE"
+            printf " Applying changes...\n"
+            update_engine
+            echo
+            press_enter
+            return
+            ;;
+        c|C)
+            rm -f "$tmp_file"
+            return
+            ;;
+        "")
+            do_activate_provider
+            return
+            ;;
+        *)
+            # Try to activate the provider
+            if grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
+                sed -i "s/^#${selection}=/${selection}=/" "$tmp_file"
+            elif grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
+                printf " %s is already active\n" "$selection"
+                sleep 1
+            else
+                printf " %s is not in the list\n" "$selection"
+                sleep 1
+            fi
+            do_activate_provider
+            ;;
+    esac
+}
+
+do_deactivate_provider() {
+    clear_screen
+    print_header
+    echo
+
+    if ! is_helium_active; then
+        print_helium_status
+        echo
+        press_enter
+        return
+    fi
+
+    tmp_file="${PROVIDERS_FILE}.tmp"
+    [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
+
+    show_providers_list
+    echo
+
+    # Check for changes
+    if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
+        printf " Select provider to deactivate (s=save, c=cancel): "
+    else
+        printf " Select provider to deactivate (c=cancel): "
+    fi
+    read -r selection
+
+    case "$selection" in
+        s|S)
+            mv "$tmp_file" "$PROVIDERS_FILE"
+            printf " Applying changes...\n"
+            update_engine
+            echo
+            press_enter
+            return
+            ;;
+        c|C)
+            rm -f "$tmp_file"
+            return
+            ;;
+        "")
+            do_deactivate_provider
+            return
+            ;;
+        *)
+            # Try to deactivate the provider
+            if grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
+                sed -i "s/^${selection}=/#${selection}=/" "$tmp_file"
+            elif grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
+                printf " %s is already inactive\n" "$selection"
+                sleep 1
+            else
+                printf " %s is not in the list\n" "$selection"
+                sleep 1
+            fi
+            do_deactivate_provider
+            ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: WHITELIST MANAGEMENT
+# -----------------------------------------------------------------------------
+
+do_whitelist() {
+    clear_screen
+    print_header
+    echo
+
+    if ! is_helium_active; then
+        print_helium_status
+        echo
+        press_enter
+        return
+    fi
+
+    [ ! -f "$WHITELIST_FILE" ] && touch "$WHITELIST_FILE"
+    tmp_file="${WHITELIST_FILE}.tmp"
+    [ ! -f "$tmp_file" ] && cp "$WHITELIST_FILE" "$tmp_file"
+
+    printf " ${WHITE}%-35s %12s${NOCOLOR}\n" "HOST" "STATUS"
+    echo " ------------------------------------------------"
+
+    if [ ! -s "$tmp_file" ]; then
+        printf " List is empty\n"
+    else
+        while IFS= read -r host || [ -n "$host" ]; do
+            [ -z "$host" ] && continue
+            printf " %-35s " "$host"
+            println_green "whitelisted"
+        done < "$tmp_file"
+    fi
+
+    echo
+
+    # Check for changes
+    if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$WHITELIST_FILE" >/dev/null 2>&1; then
+        printf " Enter hostname to add/remove (s=save, c=cancel): "
+    else
+        printf " Enter hostname to add/remove (c=cancel): "
+    fi
+    read -r selection
+
+    case "$selection" in
+        s|S)
+            mv "$tmp_file" "$WHITELIST_FILE"
+            update_engine
+            echo
+            press_enter
+            return
+            ;;
+        c|C)
+            rm -f "$tmp_file"
+            return
+            ;;
+        "")
+            do_whitelist
+            return
+            ;;
+        *)
+            # Check if already in list
+            if grep -q "^${selection}$" "$tmp_file" 2>/dev/null; then
+                if confirm "Remove ${selection} from whitelist?"; then
+                    sed -i "/^${selection}$/d" "$tmp_file"
+                fi
+            else
+                echo "$selection" >> "$tmp_file"
+                sed -i '/^$/d' "$tmp_file"
+            fi
+            do_whitelist
+            ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: BLACKLIST MANAGEMENT
+# -----------------------------------------------------------------------------
+
+do_blacklist() {
+    clear_screen
+    print_header
+    echo
+
+    if ! is_helium_active; then
+        print_helium_status
+        echo
+        press_enter
+        return
+    fi
+
+    [ ! -f "$BLACKLIST_FILE" ] && touch "$BLACKLIST_FILE"
+    tmp_file="${BLACKLIST_FILE}.tmp"
+    [ ! -f "$tmp_file" ] && cp "$BLACKLIST_FILE" "$tmp_file"
+
+    printf " ${WHITE}%-35s %12s${NOCOLOR}\n" "HOST" "STATUS"
+    echo " ------------------------------------------------"
+
+    if [ ! -s "$tmp_file" ]; then
+        printf " List is empty\n"
+    else
+        while IFS= read -r host || [ -n "$host" ]; do
+            [ -z "$host" ] && continue
+            printf " %-35s " "$host"
+            println_green "blacklisted"
+        done < "$tmp_file"
+    fi
+
+    echo
+
+    # Check for changes
+    if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$BLACKLIST_FILE" >/dev/null 2>&1; then
+        printf " Enter hostname to add/remove (s=save, c=cancel): "
+    else
+        printf " Enter hostname to add/remove (c=cancel): "
+    fi
+    read -r selection
+
+    case "$selection" in
+        s|S)
+            mv "$tmp_file" "$BLACKLIST_FILE"
+            update_engine
+            echo
+            press_enter
+            return
+            ;;
+        c|C)
+            rm -f "$tmp_file"
+            return
+            ;;
+        "")
+            do_blacklist
+            return
+            ;;
+        *)
+            # Check if already in list
+            if grep -q "^${selection}$" "$tmp_file" 2>/dev/null; then
+                if confirm "Remove ${selection} from blacklist?"; then
+                    sed -i "/^${selection}$/d" "$tmp_file"
+                fi
+            else
+                echo "$selection" >> "$tmp_file"
+                sed -i '/^$/d' "$tmp_file"
+            fi
+            do_blacklist
+            ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: DNS CHANGE
+# -----------------------------------------------------------------------------
+
+do_change_dns() {
+    clear_screen
+    print_header
+    echo
+    print_helium_status
+    echo
+
+    println_white " Change DNS Server"
+    echo " [1] Google (8.8.8.8)"
+    echo " [2] Cloudflare (1.1.1.1)"
+    echo " [3] Cloudflare Family (1.1.1.3)"
+    echo " [4] AdGuard DNS (94.140.14.14)"
+    echo " [5] AdGuard Family (94.140.14.15)"
+    echo " [6] Quad9 (9.9.9.9)"
+    echo " [7] Custom"
+    echo " [8] Back to menu"
+    echo
+    printf " Enter option [1-8]: "
+    read -r option
+
+    case "$option" in
+        1) new_dns="8.8.8.8"; provider="Google" ;;
+        2) new_dns="1.1.1.1"; provider="Cloudflare" ;;
+        3) new_dns="1.1.1.3"; provider="Cloudflare Family" ;;
+        4) new_dns="94.140.14.14"; provider="AdGuard" ;;
+        5) new_dns="94.140.14.15"; provider="AdGuard Family" ;;
+        6) new_dns="9.9.9.9"; provider="Quad9" ;;
+        7)
+            printf " Enter DNS IP address: "
+            read -r new_dns
+            [ -z "$new_dns" ] && do_change_dns && return
+            provider="Custom"
+            ;;
+        8|"") return ;;
+        *) do_change_dns; return ;;
+    esac
+
+    printf " Changing to %s DNS..." "$provider"
+    set_dns_server "$new_dns"
+    restart_dnsmasq
+    sleep 2
+    println_green "done"
+    printf " DNS server changed to "
+    println_green "$new_dns"
+    echo
+    press_enter
+    do_change_dns
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: IPV6 TOGGLE (OpenWrt only)
+# -----------------------------------------------------------------------------
+
+do_toggle_ipv6() {
+    clear_screen
+    print_header
+    echo
+
+    if ! ip a 2>/dev/null | grep -q "inet6"; then
+        printf " IPv6 is currently: "
+        println_red "disabled"
+        echo
+
+        if confirm "Do you want to enable IPv6?"; then
+            printf " Enabling IPv6..."
+            echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+            sed -i '/disable_ipv6/d' /etc/rc.local 2>/dev/null
+            println_green "done"
+            update_engine
+        fi
+    else
+        printf " IPv6 is currently: "
+        println_green "enabled"
+        echo
+
+        if confirm "Do you want to disable IPv6?"; then
+            printf " Disabling IPv6..."
+            echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+            # Persist on boot
+            if [ -f /etc/rc.local ]; then
+                sed -i '/disable_ipv6/d' /etc/rc.local
+                sed -i '/^exit 0/i echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local 2>/dev/null || \
+                    echo 'echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' >> /etc/rc.local
+            fi
+            println_green "done"
+            update_engine
+        fi
+    fi
+    echo
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: DATABASE CLEANER
+# -----------------------------------------------------------------------------
+
+do_clean_database() {
+    clear_screen
+    print_header
+    echo
+    print_helium_status
+    echo
+
+    if ! is_helium_active; then
+        println_yellow " Helium is not active"
+        echo
+        press_enter
+        return
+    fi
+
+    if confirm "Do you want to cleanup the database?"; then
+        clean_dead_hosts
+    fi
+    echo
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# FEATURE: UPDATE HELIUM
+# -----------------------------------------------------------------------------
+
+do_update_helium() {
+    clear_screen
+    print_header
+    echo
+
+    printf " Checking for updates..."
+
+    tmp_script="/tmp/helium.tmp"
+    if ! download_file "$REMOTE_SCRIPT" "$tmp_script"; then
+        println_red "failed"
+        printf " Could not check for updates\n"
+        echo
+        press_enter
+        return
+    fi
+
+    latest_version=$(grep "^VERSION_NUMBER=" "$tmp_script" 2>/dev/null | cut -d'"' -f2 | head -1)
+    current_version="$VERSION_NUMBER"
+
+    if [ "$current_version" = "$latest_version" ]; then
+        println_green "up to date"
+        printf " You are running the latest version (v%s)\n" "$current_version"
+        rm -f "$tmp_script"
+        echo
+        press_enter
+        return
+    fi
+
+    printf "\n New version available: "
+    println_green "v${latest_version}"
+    printf " Current version: v%s\n" "$current_version"
+    echo
+
+    if ! confirm "Do you want to update?"; then
+        rm -f "$tmp_script"
+        return
+    fi
+
+    if confirm "Overwrite existing providers list?"; then
+        download_file "$REMOTE_PROVIDERS" "$PROVIDERS_FILE"
+    fi
+
+    printf " Updating Helium..."
+    mv "$tmp_script" "$INSTALL_PATH"
+    chmod 755 "$INSTALL_PATH"
+    println_green "done"
+
+    update_engine
+
+    echo
+    printf " Type "
+    print_green "helium"
+    printf " to start the new version\n"
+    echo
+    exit 0
+}
+
+# -----------------------------------------------------------------------------
+# MAIN MENU
+# -----------------------------------------------------------------------------
+
+main_menu() {
+    while true; do
+        clear_screen
+        print_header
+        echo
+        print_helium_status
+        echo
+        print_machine_info
+        echo
+
+        println_white " Manage Helium"
+
+        if [ "$OS_TYPE" = "openwrt" ]; then
+            # OpenWrt menu
+            echo " [ 1] Start Helium          [ 6] Whitelist host"
+            echo " [ 2] Stop Helium           [ 7] Blacklist host"
+            echo " [ 3] Update database       [ 8] Toggle IPv6"
+            echo " [ 4] Activate provider     [ 9] Update Helium"
+            echo " [ 5] Deactivate provider   [10] Uninstall"
+            echo "                            [11] Exit"
+        else
+            # Linux server menu (with more options)
+            echo " [ 1] Start Helium          [ 7] Blacklist host"
+            echo " [ 2] Stop Helium           [ 8] Change DNS"
+            echo " [ 3] Update database       [ 9] Clean database"
+            echo " [ 4] Activate provider     [10] Update Helium"
+            echo " [ 5] Deactivate provider   [11] Uninstall"
+            echo " [ 6] Whitelist host        [12] Exit"
+        fi
+
+        echo
+
+        if [ "$OS_TYPE" = "openwrt" ]; then
+            printf " Enter option [1-11]: "
+            read -r menu_option
+
+            case "$menu_option" in
+                1) do_start ;;
+                2) do_stop ;;
+                3) do_update_database ;;
+                4) do_activate_provider ;;
+                5) do_deactivate_provider ;;
+                6) do_whitelist ;;
+                7) do_blacklist ;;
+                8) do_toggle_ipv6 ;;
+                9) do_update_helium ;;
+                10)
+                    if confirm "Do you want to uninstall Helium?"; then
+                        do_uninstall
+                        exit 0
+                    fi
+                    ;;
+                11) exit 0 ;;
+                *) ;;
+            esac
+        else
+            printf " Enter option [1-12]: "
+            read -r menu_option
+
+            case "$menu_option" in
+                1) do_start ;;
+                2) do_stop ;;
+                3) do_update_database ;;
+                4) do_activate_provider ;;
+                5) do_deactivate_provider ;;
+                6) do_whitelist ;;
+                7) do_blacklist ;;
+                8) do_change_dns ;;
+                9) do_clean_database ;;
+                10) do_update_helium ;;
+                11)
+                    if confirm "Do you want to uninstall Helium?"; then
+                        do_uninstall
+                        exit 0
+                    fi
+                    ;;
+                12) exit 0 ;;
+                *) ;;
+            esac
+        fi
+    done
+}
+
+# -----------------------------------------------------------------------------
+# ENTRY POINT
+# -----------------------------------------------------------------------------
+
+main() {
+    # Must be root
+    check_root
+
+    # Detect environment
+    detect_environment
+
+    # Check virtualization (Linux only)
+    check_virtualization
+
+    # Check if Helium is installed
+    if is_dnsmasq_running && is_helium_active; then
+        # Already installed, show menu
+        main_menu
+    elif [ -f "$ADBLOCK_HOSTS" ] || [ -f "$PROVIDERS_FILE" ]; then
+        # Partially installed, show menu
+        main_menu
+    else
+        # Not installed, offer installation
+        clear_screen
+        print_header
+        echo
+
+        if confirm "Helium is not installed. Install now?"; then
+            do_install
+        else
+            exit 0
+        fi
+    fi
+}
+
+# Run main
+main "$@"

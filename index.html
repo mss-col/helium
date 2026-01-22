@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helium - Universal DNS Ad Blocker</title>
+    <meta name="description" content="Block ads, trackers, malware and phishing on Linux servers and OpenWrt routers with Helium DNS-based ad blocker.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #79b8ff;
+            --success: #3fb950;
+            --border: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .badges {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .badge.version {
+            background: var(--success);
+            color: var(--bg-primary);
+            border-color: var(--success);
+        }
+
+        section {
+            padding: 2.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .install-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .install-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block code {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--success);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            color: var(--bg-primary);
+            border-color: var(--success);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .platform-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .platform-table th,
+        .platform-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .platform-table th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .platform-table td {
+            color: var(--text-primary);
+        }
+
+        .check {
+            color: var(--success);
+        }
+
+        .cross {
+            color: var(--text-secondary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn.primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: var(--bg-primary);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .install-tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🛡️</div>
+            <h1>Helium</h1>
+            <p class="tagline">Universal DNS-based Ad Blocker</p>
+            <div class="badges">
+                <span class="badge version">v4.0.0</span>
+                <span class="badge">Linux</span>
+                <span class="badge">OpenWrt</span>
+                <span class="badge">POSIX Shell</span>
+            </div>
+        </header>
+
+        <section class="install-section">
+            <h2>⚡ Quick Install</h2>
+
+            <div class="install-tabs">
+                <button class="tab-btn active" onclick="showTab('linux')">Linux Server</button>
+                <button class="tab-btn" onclick="showTab('openwrt')">OpenWrt Router</button>
+                <button class="tab-btn" onclick="showTab('universal')">Universal</button>
+            </div>
+
+            <div id="linux-tab" class="tab-content">
+                <div class="code-block">
+                    <code>wget -O /usr/local/sbin/helium https://raw.githubusercontent.com/mss-col/helium/main/helium && chmod +x /usr/local/sbin/helium && helium</code>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+            </div>
+
+            <div id="openwrt-tab" class="tab-content hidden">
+                <div class="code-block">
+                    <code>wget -O /usr/sbin/helium https://raw.githubusercontent.com/mss-col/helium/main/helium && chmod +x /usr/sbin/helium && helium</code>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+            </div>
+
+            <div id="universal-tab" class="tab-content hidden">
+                <div class="code-block">
+                    <code>wget -qO- https://mss-col.github.io/helium/install.sh | sh</code>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                    Auto-detects OS and installs to correct path
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h2>✨ Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚫</div>
+                    <h3>Block Ads & Trackers</h3>
+                    <p>Remove intrusive ads and prevent tracking across all devices on your network</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🦠</div>
+                    <h3>Malware Protection</h3>
+                    <p>Block known malware, phishing, and scam domains at DNS level</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>40+ Blocklists</h3>
+                    <p>Curated lists from HaGeZi, OISD, AdGuard, EasyList, and more</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Easy Management</h3>
+                    <p>Simple CLI menu to manage providers, whitelist, and settings</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Auto Updates</h3>
+                    <p>Daily automatic updates to keep blocklists current</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Universal</h3>
+                    <p>One script works on Linux servers and OpenWrt routers</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📊 Platform Comparison</h2>
+            <table class="platform-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Linux</th>
+                        <th>OpenWrt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Block Ads & Trackers</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Provider Management</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Whitelist / Blacklist</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Change DNS Server</td>
+                        <td class="check">✓</td>
+                        <td class="cross">—</td>
+                    </tr>
+                    <tr>
+                        <td>Clean Dead Hosts</td>
+                        <td class="check">✓</td>
+                        <td class="cross">—</td>
+                    </tr>
+                    <tr>
+                        <td>Toggle IPv6</td>
+                        <td class="cross">—</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Auto Daily Update</td>
+                        <td class="check">✓</td>
+                        <td class="cross">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>🖥️ Supported Platforms</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🐧</div>
+                    <h3>Linux</h3>
+                    <p>Debian 10/11/12<br>Ubuntu 20.04/22.04/24.04<br>RHEL/CentOS/Rocky 8/9</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📶</div>
+                    <h3>OpenWrt</h3>
+                    <p>QWRT<br>NSS-based OpenWrt<br>Arcadyan AW1000</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="btn-group">
+            <a href="https://github.com/mss-col/helium" class="btn primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                GitHub
+            </a>
+            <a href="https://github.com/mss-col/helium/issues" class="btn">
+                Report Issue
+            </a>
+            <a href="https://d3ward.github.io/toolz/adblock.html" class="btn">
+                Test Efficiency
+            </a>
+        </div>
+
+        <footer>
+            <p>
+                Original by <a href="https://github.com/abidarwish">Abi Darwish</a> •
+                Enhanced by <a href="https://github.com/mss-col">MSS</a> •
+                Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0">GPL v3</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tab + '-tab').classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+
+        function copyCode(btn) {
+            const code = btn.parentElement.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
