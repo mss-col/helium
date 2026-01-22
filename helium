@@ -73,7 +73,7 @@ clear_screen() {
 # Print header
 print_header() {
     println_green " ${VERSION_NAME} v${VERSION_NUMBER}"
-    print_white " by Abi Darwish"
+    print_white " by Abi Darwish & MSS"
     if [ "$OS_TYPE" = "openwrt" ]; then
         printf " ${YELLOW}[OpenWrt]${NOCOLOR}\n"
     else
