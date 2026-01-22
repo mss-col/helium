@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.1.2"
+VERSION_NUMBER="4.1.3"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -946,9 +946,9 @@ print_machine_info() {
 
     # RAM with progress bar (handle both Linux and OpenWrt/BusyBox)
     if command_exists free; then
-        # Get raw values first
-        ram_used=$(free 2>/dev/null | grep -i mem | awk '{print $3}')
-        ram_total=$(free 2>/dev/null | grep -i mem | awk '{print $2}')
+        # Get raw values first (use Mem: exact match for BusyBox compatibility)
+        ram_used=$(free 2>/dev/null | awk '/Mem:/ {print $3}')
+        ram_total=$(free 2>/dev/null | awk '/Mem:/ {print $2}')
 
         # BusyBox free returns KB even with -m flag (it ignores it)
         # If value > 100000, it's definitely KB not MB, so convert
