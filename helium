@@ -433,9 +433,33 @@ set_dns_server() {
     fi
 }
 
+# Check if Tailscale or other VPN DNS is active
+is_vpn_dns_active() {
+    # Check for Tailscale
+    if pgrep -x tailscaled >/dev/null 2>&1; then
+        return 0
+    fi
+    # Check for Tailscale DNS in resolv.conf
+    if grep -q "100.100.100.100" /etc/resolv.conf 2>/dev/null; then
+        return 0
+    fi
+    # Check for common VPN DNS patterns
+    if grep -qE "tun|vpn|wg|tailscale" /etc/resolv.conf 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
 # Configure resolv.conf (Linux servers only)
+# Skips if Tailscale or VPN DNS detected to avoid conflicts
 configure_resolv() {
     if [ "$OS_TYPE" != "openwrt" ]; then
+        # Skip if VPN DNS active (Tailscale, WireGuard, etc.)
+        if is_vpn_dns_active; then
+            println_yellow "VPN DNS detected - skipping resolv.conf (no conflict)"
+            return 0
+        fi
+
         # Backup original if not exists
         [ ! -f /etc/resolv.conf.bak ] && cp /etc/resolv.conf /etc/resolv.conf.bak 2>/dev/null
 
@@ -447,6 +471,11 @@ configure_resolv() {
 # Restore resolv.conf (Linux servers only)
 restore_resolv() {
     if [ "$OS_TYPE" != "openwrt" ]; then
+        # Skip if VPN DNS active
+        if is_vpn_dns_active; then
+            return 0
+        fi
+
         if [ -f /etc/resolv.conf.bak ]; then
             cp /etc/resolv.conf.bak /etc/resolv.conf
         else
@@ -1055,7 +1084,10 @@ do_force_uninstall() {
 
     echo " [5/7] Restoring DNS resolver..."
     if [ "$os" != "openwrt" ]; then
-        if [ -f /etc/resolv.conf.bak ]; then
+        # Check for Tailscale/VPN DNS - don't touch if active
+        if pgrep -x tailscaled >/dev/null 2>&1 || grep -q "100.100.100.100" /etc/resolv.conf 2>/dev/null; then
+            echo "       skipped (VPN DNS detected)"
+        elif [ -f /etc/resolv.conf.bak ]; then
             cp /etc/resolv.conf.bak /etc/resolv.conf 2>/dev/null || true
             echo "       restored from backup"
         else
