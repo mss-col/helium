@@ -256,7 +256,7 @@ main() {
         echo "  [3] $(print_red "Cancel") - Exit without changes"
         echo ""
         printf "  Enter choice [1-3]: "
-        read -r choice
+        read -r choice < /dev/tty
 
         case "$choice" in
             1) do_upgrade ;;
@@ -277,7 +277,7 @@ main() {
         echo " No existing installation found."
         echo ""
         printf " Install Helium now? [Y/n]: "
-        read -r confirm
+        read -r confirm < /dev/tty
 
         case "$confirm" in
             n|N|no|NO)
