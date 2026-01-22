@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.3"
+VERSION_NUMBER="4.0.4"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -147,8 +147,12 @@ press_enter() {
 
 # Read user input with proper terminal settings (fixes backspace on OpenWRT)
 read_input() {
-    stty sane 2>/dev/null
-    read -r REPLY < /dev/tty
+    # Save current tty, fix settings, read, then we're done
+    old_tty=$(stty -g 2>/dev/null)
+    stty sane icanon echo 2>/dev/null
+    stty erase ^H 2>/dev/null || stty erase ^? 2>/dev/null
+    read -r REPLY
+    [ -n "$old_tty" ] && stty "$old_tty" 2>/dev/null
 }
 
 # Validate IPv4 address format
