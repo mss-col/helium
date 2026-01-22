@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.1.0"
+VERSION_NUMBER="4.1.1"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -944,16 +944,24 @@ print_machine_info() {
     kernel=$(uname -r | cut -c1-25)
     printf " ${HE_BORDER}│${NOCOLOR}  ⚙️  ${HE_MUTED}Kernel               ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$kernel"
 
-    # RAM with progress bar
+    # RAM with progress bar (handle both Linux and OpenWrt/BusyBox)
     if command_exists free; then
-        ram_used=$(free -m 2>/dev/null | grep Mem: | awk '{print $3}')
-        ram_total=$(free -m 2>/dev/null | grep Mem: | awk '{print $2}')
+        # Try -m first (GNU coreutils), fallback to raw (BusyBox)
+        if free -m >/dev/null 2>&1; then
+            ram_used=$(free -m 2>/dev/null | grep -i mem | awk '{print $3}')
+            ram_total=$(free -m 2>/dev/null | grep -i mem | awk '{print $2}')
+        else
+            # BusyBox free returns KB, convert to MB
+            ram_used_kb=$(free 2>/dev/null | grep -i mem | awk '{print $3}')
+            ram_total_kb=$(free 2>/dev/null | grep -i mem | awk '{print $2}')
+            ram_used=$((ram_used_kb / 1024))
+            ram_total=$((ram_total_kb / 1024))
+        fi
         if [ -n "$ram_used" ] && [ -n "$ram_total" ] && [ "$ram_total" -gt 0 ]; then
             ram_percent=$((ram_used * 100 / ram_total))
             # Create mini progress bar
             bar_width=10
             filled=$((ram_percent * bar_width / 100))
-            empty=$((bar_width - filled))
             bar=""
             i=0; while [ $i -lt $filled ]; do bar="${bar}█"; i=$((i+1)); done
             while [ $i -lt $bar_width ]; do bar="${bar}░"; i=$((i+1)); done
@@ -2142,12 +2150,20 @@ do_upgrade_script() {
 # MODERN MAIN MENU
 # =============================================================================
 
-# Print a menu item with icon
-print_menu_item() {
+# Print a menu item with icon (left column)
+print_menu_left() {
     num="$1"
     icon="$2"
     label="$3"
     printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[%2s]${NOCOLOR} %s ${WHITE}%-18s${NOCOLOR}" "$num" "$icon" "$label"
+}
+
+# Print a menu item with icon (right column with separator)
+print_menu_right() {
+    num="$1"
+    icon="$2"
+    label="$3"
+    printf "${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[%2s]${NOCOLOR} %s ${WHITE}%-18s${NOCOLOR}" "$num" "$icon" "$label"
 }
 
 main_menu() {
@@ -2160,43 +2176,43 @@ main_menu() {
         print_section "Quick Actions" "⚡"
 
         if [ "$OS_TYPE" = "openwrt" ]; then
-            # OpenWrt menu (11 options) - Two column layout
-            print_menu_item "1" "▶️ " "Start Helium"
-            print_menu_item "7" "⛔" "Blacklist Host"
+            # OpenWrt menu (11 options) - Two column layout with separator
+            print_menu_left "1" "▶️ " "Start Helium"
+            print_menu_right "7" "⛔" "Blacklist Host"
             printf "\n"
-            print_menu_item "2" "⏹️ " "Stop Helium"
-            print_menu_item "8" "🔄" "Toggle IPv6"
+            print_menu_left "2" "⏹️ " "Stop Helium"
+            print_menu_right "8" "🔄" "Toggle IPv6"
             printf "\n"
-            print_menu_item "3" "📥" "Update Database"
-            print_menu_item "9" "⬆️ " "Update Helium"
+            print_menu_left "3" "📥" "Update Database"
+            print_menu_right "9" "⬆️ " "Update Helium"
             printf "\n"
-            print_menu_item "4" "✅" "Activate Provider"
-            print_menu_item "10" "🗑️ " "Uninstall"
+            print_menu_left "4" "✅" "Activate Provider"
+            print_menu_right "10" "🗑️ " "Uninstall"
             printf "\n"
-            print_menu_item "5" "❌" "Deactivate Provider"
-            print_menu_item "11" "🚪" "Exit"
+            print_menu_left "5" "❌" "Deactivate Provider"
+            print_menu_right "11" "🚪" "Exit"
             printf "\n"
-            print_menu_item "6" "✨" "Whitelist Host"
+            print_menu_left "6" "✨" "Whitelist Host"
             printf "\n"
         else
-            # Linux server menu (12 options) - Two column layout
-            print_menu_item "1" "▶️ " "Start Helium"
-            print_menu_item "7" "⛔" "Blacklist Host"
+            # Linux server menu (12 options) - Two column layout with separator
+            print_menu_left "1" "▶️ " "Start Helium"
+            print_menu_right "7" "⛔" "Blacklist Host"
             printf "\n"
-            print_menu_item "2" "⏹️ " "Stop Helium"
-            print_menu_item "8" "🌐" "Change DNS"
+            print_menu_left "2" "⏹️ " "Stop Helium"
+            print_menu_right "8" "🌐" "Change DNS"
             printf "\n"
-            print_menu_item "3" "📥" "Update Database"
-            print_menu_item "9" "🧹" "Clean Database"
+            print_menu_left "3" "📥" "Update Database"
+            print_menu_right "9" "🧹" "Clean Database"
             printf "\n"
-            print_menu_item "4" "✅" "Activate Provider"
-            print_menu_item "10" "⬆️ " "Update Helium"
+            print_menu_left "4" "✅" "Activate Provider"
+            print_menu_right "10" "⬆️ " "Update Helium"
             printf "\n"
-            print_menu_item "5" "❌" "Deactivate Provider"
-            print_menu_item "11" "🗑️ " "Uninstall"
+            print_menu_left "5" "❌" "Deactivate Provider"
+            print_menu_right "11" "🗑️ " "Uninstall"
             printf "\n"
-            print_menu_item "6" "✨" "Whitelist Host"
-            print_menu_item "12" "🚪" "Exit"
+            print_menu_left "6" "✨" "Whitelist Host"
+            print_menu_right "12" "🚪" "Exit"
             printf "\n"
         fi
 
