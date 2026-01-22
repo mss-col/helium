@@ -65,12 +65,13 @@ helium
 Helium supports command-line arguments for scripting and automation:
 
 ```bash
-helium                 # Interactive menu
-helium --update, -u    # Update blocklist database
-helium --upgrade, -U   # Update Helium script from repository
-helium --status, -s    # Show current status
-helium --version, -v   # Show version
-helium --help, -h      # Show help
+helium                   # Interactive menu
+helium --update, -u      # Update blocklist database
+helium --upgrade, -U     # Update Helium script from repository
+helium --status, -s      # Show current status
+helium --version, -v     # Show version
+helium --uninstall, -X   # Force uninstall (restore original state)
+helium --help, -h        # Show help
 ```
 
 ### Examples
@@ -84,6 +85,9 @@ helium --upgrade
 
 # Check if Helium is running
 helium --status
+
+# Emergency uninstall (no confirmation, restore original state)
+helium --uninstall
 ```
 
 ## Manual Cron Setup

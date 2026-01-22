@@ -999,6 +999,90 @@ do_uninstall() {
     echo
 }
 
+# Force uninstall - restore system to original state (no confirmation, works even if broken)
+do_force_uninstall() {
+    echo "==================================================="
+    echo " HELIUM FORCE UNINSTALL - Restoring Original State"
+    echo "==================================================="
+    echo
+
+    # Detect OS type manually (minimal detection for worst case)
+    if [ -f /etc/openwrt_release ]; then
+        os="openwrt"
+        install_path="/usr/sbin/helium"
+    else
+        os="linux"
+        install_path="/usr/local/sbin/helium"
+    fi
+
+    echo " [1/7] Stopping dnsmasq service..."
+    if [ "$os" = "openwrt" ]; then
+        /etc/init.d/dnsmasq stop 2>/dev/null || true
+    else
+        systemctl stop dnsmasq 2>/dev/null || true
+    fi
+    echo "       done"
+
+    echo " [2/7] Removing adblock configuration..."
+    # OpenWrt
+    if [ "$os" = "openwrt" ]; then
+        sed -i '/addn-hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        uci -q delete dhcp.@dnsmasq[0].addnhosts 2>/dev/null || true
+        uci commit dhcp 2>/dev/null || true
+    else
+        # Linux
+        sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf 2>/dev/null || true
+    fi
+    echo "       done"
+
+    echo " [3/7] Removing Helium files..."
+    rm -rf /etc/dnsmasq 2>/dev/null || true
+    rm -f "$install_path" 2>/dev/null || true
+    # Also try other possible paths
+    rm -f /usr/local/sbin/helium 2>/dev/null || true
+    rm -f /usr/sbin/helium 2>/dev/null || true
+    rm -f /usr/local/sbin/helium_daily 2>/dev/null || true
+    echo "       done"
+
+    echo " [4/7] Removing cron jobs..."
+    if [ "$os" = "openwrt" ]; then
+        sed -i '#helium#d' /etc/crontabs/root 2>/dev/null || true
+        /etc/init.d/cron restart 2>/dev/null || true
+    else
+        sed -i '/helium/d' /etc/crontab 2>/dev/null || true
+    fi
+    echo "       done"
+
+    echo " [5/7] Restoring DNS resolver..."
+    if [ "$os" != "openwrt" ]; then
+        if [ -f /etc/resolv.conf.bak ]; then
+            cp /etc/resolv.conf.bak /etc/resolv.conf 2>/dev/null || true
+            echo "       restored from backup"
+        else
+            echo "nameserver 1.1.1.1" > /etc/resolv.conf 2>/dev/null || true
+            echo "       set to 1.1.1.1"
+        fi
+    else
+        echo "       skipped (OpenWrt)"
+    fi
+
+    echo " [6/7] Restarting dnsmasq service..."
+    if [ "$os" = "openwrt" ]; then
+        /etc/init.d/dnsmasq start 2>/dev/null || true
+    else
+        systemctl start dnsmasq 2>/dev/null || true
+    fi
+    echo "       done"
+
+    echo " [7/7] Cleanup complete"
+    echo
+    echo "==================================================="
+    echo " Helium has been completely removed."
+    echo " System restored to original state."
+    echo "==================================================="
+    echo
+}
+
 do_reinstall() {
     printf " Reinstalling Helium...\n"
     sleep 1
@@ -2003,16 +2087,22 @@ main() {
             echo "Helium v${VERSION_NUMBER} (${VERSION_SUFFIX})"
             exit 0
             ;;
+        --uninstall|--force-uninstall|-X)
+            # Force uninstall - no confirmation, restore original state
+            do_force_uninstall
+            exit 0
+            ;;
         --help|-h)
             echo "Helium v${VERSION_NUMBER} - DNS-based Ad Blocker"
             echo "Usage: helium [OPTION]"
             echo ""
             echo "Options:"
-            echo "  --update, -u     Update blocklist database"
-            echo "  --upgrade, -U    Update Helium script from repository"
-            echo "  --status, -s     Show current status"
-            echo "  --version, -v    Show version"
-            echo "  --help, -h       Show this help"
+            echo "  --update, -u       Update blocklist database"
+            echo "  --upgrade, -U      Update Helium script from repository"
+            echo "  --status, -s       Show current status"
+            echo "  --version, -v      Show version"
+            echo "  --uninstall, -X    Force uninstall and restore original state"
+            echo "  --help, -h         Show this help"
             echo ""
             echo "Run without arguments for interactive menu."
             exit 0
