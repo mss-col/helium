@@ -1972,21 +1972,21 @@ main_menu() {
         println_white " Manage Helium"
 
         if [ "$OS_TYPE" = "openwrt" ]; then
-            # OpenWrt menu
-            echo " [ 1] Start Helium          [ 6] Whitelist host"
-            echo " [ 2] Stop Helium           [ 7] Blacklist host"
-            echo " [ 3] Update database       [ 8] Toggle IPv6"
-            echo " [ 4] Activate provider     [ 9] Update Helium"
-            echo " [ 5] Deactivate provider   [10] Uninstall"
-            echo "                            [11] Exit"
+            # OpenWrt menu (11 options)
+            echo " [1] Start Helium         [7] Blacklist host"
+            echo " [2] Stop Helium          [8] Toggle IPv6"
+            echo " [3] Update database      [9] Update Helium"
+            echo " [4] Activate provider   [10] Uninstall"
+            echo " [5] Deactivate provider [11] Exit"
+            echo " [6] Whitelist host"
         else
-            # Linux server menu (with more options)
-            echo " [ 1] Start Helium          [ 7] Blacklist host"
-            echo " [ 2] Stop Helium           [ 8] Change DNS"
-            echo " [ 3] Update database       [ 9] Clean database"
-            echo " [ 4] Activate provider     [10] Update Helium"
-            echo " [ 5] Deactivate provider   [11] Uninstall"
-            echo " [ 6] Whitelist host        [12] Exit"
+            # Linux server menu (12 options)
+            echo " [1] Start Helium         [7] Blacklist host"
+            echo " [2] Stop Helium          [8] Change DNS"
+            echo " [3] Update database      [9] Clean database"
+            echo " [4] Activate provider   [10] Update Helium"
+            echo " [5] Deactivate provider [11] Uninstall"
+            echo " [6] Whitelist host      [12] Exit"
         fi
 
         echo
