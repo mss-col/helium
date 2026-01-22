@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.1"
+VERSION_NUMBER="4.0.2"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -789,8 +789,8 @@ print_helium_status() {
 print_machine_info() {
     println_white " Machine Info"
 
-    # CPU
-    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "model name|Model" | tail -1 | cut -d':' -f2 | sed 's/^ //' | cut -d' ' -f1-3)
+    # CPU (supports x86, ARM, MIPS - including OpenWRT)
+    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -Ei "model name|system type|Hardware|^Processor|cpu model" | head -1 | cut -d':' -f2 | sed 's/^ //' | cut -c1-40)
     cpu_cores=$(grep -c "^processor" /proc/cpuinfo 2>/dev/null || echo "1")
 
     if [ "$cpu_cores" = "1" ]; then
