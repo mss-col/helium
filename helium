@@ -512,129 +512,68 @@ restore_resolv() {
 #   - Localhost entries: localhost, broadcasthost
 # =============================================================================
 
-# Process raw blocklist and extract valid domains
+# Process raw blocklist and extract valid domains - OPTIMIZED with awk
+# Handles: hosts format, AdBlock format, wildcard, domain-only
+# awk is 10-50x faster than shell while-loop for large files
 process_blocklist() {
-    # Read from stdin and process line by line
-    while IFS= read -r raw_line || [ -n "$raw_line" ]; do
-        # Trim whitespace
-        line=$(echo "$raw_line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    awk '
+    {
+        # Trim whitespace and remove carriage return
+        gsub(/\r/, "")
+        gsub(/^[ \t]+|[ \t]+$/, "")
+        line = $0
 
-        # Skip empty lines
-        [ -z "$line" ] && continue
+        # Skip empty lines and comments
+        if (line == "") next
+        if (line ~ /^[#!]/ || line ~ /^\[Adblock/) next
 
-        # Skip comments (! for AdBlock, # for hosts)
-        case "$line" in
-            \!*|\#*|"[Adblock"*) continue ;;
-        esac
+        # Skip AdBlock special rules
+        if (line ~ /^@@/) next                    # Exception rules
+        if (line ~ /##|#@#|#\?#/) next           # Element hiding
+        if (line ~ /^\//) next                    # URL patterns
+        if (line ~ /\/.*\//) next                 # Contains path
+        if (line ~ /\$.*=/) next                  # Complex options
+        if (line ~ /^[&\-]/) next                 # URL patterns
+        if (line ~ /^\.[^.]*\//) next             # .com/path patterns
 
-        # Skip exception/whitelist rules (@@)
-        case "$line" in
-            @@*) continue ;;
-        esac
+        domain = ""
 
-        # Skip element hiding rules (##, #@#, #?#)
-        case "$line" in
-            *"##"*|*"#@#"*|*"#?#"*) continue ;;
-        esac
+        # Format 1: Hosts format (0.0.0.0 or 127.0.0.1)
+        if (line ~ /^(0\.0\.0\.0|127\.0\.0\.1)[ \t]/) {
+            domain = $2
+        }
+        # Skip IPv6 and broadcast
+        else if (line ~ /^(::1|fe80:|ff0|255\.255\.255\.255)/) {
+            next
+        }
+        # Format 2: AdBlock format (||domain^)
+        else if (line ~ /^\|\|/) {
+            domain = line
+            gsub(/^\|\|/, "", domain)
+            gsub(/\^.*/, "", domain)
+            gsub(/\$.*/, "", domain)
+        }
+        # Format 3: Wildcard format (*.domain)
+        else if (line ~ /^\*\./) {
+            domain = line
+            gsub(/^\*\./, "", domain)
+        }
+        # Format 4: Domain-only (no spaces/special chars, has dot)
+        else if (line !~ /[ \t\/=&@\[\]]/ && line ~ /\./) {
+            domain = line
+        }
 
-        # Skip URL patterns (start with / but not domain)
-        case "$line" in
-            "/"*) continue ;;
-            *"/"*"/"*) continue ;;  # Contains path
-        esac
+        if (domain == "") next
 
-        # Skip lines with complex AdBlock syntax
-        case "$line" in
-            *"$"*"="*) continue ;;  # Has options with values
-            "&"*) continue ;;       # URL parameter patterns
-            "-"*) continue ;;       # URL path patterns
-            "."*[/]*) continue ;;   # .com/path patterns
-        esac
+        # Validation
+        if (domain ~ /^(localhost|local|broadcasthost|ip6-)/) next
+        if (domain ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) next
+        if (length(domain) < 4) next
+        if (domain !~ /\./) next
+        if (domain ~ /[*\/\\?#!$^]/) next
 
-        domain=""
-
-        # === Format 1: Hosts format (0.0.0.0 or 127.0.0.1) ===
-        case "$line" in
-            "0.0.0.0 "*|"127.0.0.1 "*)
-                domain=$(echo "$line" | awk '{print $2}')
-                ;;
-            "::1 "*|"fe80:"*|"ff0"*|"255.255.255.255 "*)
-                # Skip IPv6 and broadcast entries
-                continue
-                ;;
-        esac
-
-        # === Format 2: AdBlock format (||domain^) ===
-        if [ -z "$domain" ]; then
-            case "$line" in
-                "||"*)
-                    # Extract domain from ||domain^ or ||domain^$options
-                    domain=$(echo "$line" | sed 's/^||//' | sed 's/\^.*//' | sed 's/\$.*//')
-                    ;;
-            esac
-        fi
-
-        # === Format 3: Wildcard format (*.domain) ===
-        if [ -z "$domain" ]; then
-            case "$line" in
-                "*."*)
-                    domain=$(echo "$line" | sed 's/^\*\.//')
-                    ;;
-            esac
-        fi
-
-        # === Format 4: Domain-only (plain domain) ===
-        if [ -z "$domain" ]; then
-            # Check if it looks like a domain (contains dot, no spaces, no special chars)
-            case "$line" in
-                *" "*|*"/"*|*"="*|*"&"*|*"@"*|*"["*|*"]"*)
-                    # Skip lines with spaces or URL characters
-                    continue
-                    ;;
-                *"."*)
-                    # Looks like a domain
-                    domain="$line"
-                    ;;
-            esac
-        fi
-
-        # Skip if no valid domain extracted
-        [ -z "$domain" ] && continue
-
-        # === Validation: Skip invalid entries ===
-
-        # Skip localhost entries
-        case "$domain" in
-            "localhost"*|"local"|"broadcasthost"|"ip6-"*) continue ;;
-        esac
-
-        # Skip if domain is just an IP address
-        case "$domain" in
-            [0-9]*"."[0-9]*"."[0-9]*"."[0-9]*) continue ;;
-        esac
-
-        # Skip if domain is too short (less than 4 chars like a.co)
-        # Using wc -c for POSIX/busybox compatibility instead of ${#var}
-        domain_len=$(printf '%s' "$domain" | wc -c | tr -d ' ')
-        if [ "$domain_len" -lt 4 ]; then
-            continue
-        fi
-
-        # Skip if domain doesn't contain a dot
-        case "$domain" in
-            *"."*) ;;
-            *) continue ;;
-        esac
-
-        # Skip if domain contains invalid characters
-        case "$domain" in
-            *"*"*|*"/"*|*"\\"*|*"?"*|*"#"*|*"!"*|*"$"*|*"^"*) continue ;;
-        esac
-
-        # Output valid domain in hosts format
-        printf "0.0.0.0 %s\n" "$domain"
-
-    done
+        print "0.0.0.0 " domain
+    }'
 }
 
 # Update blocked hostnames from providers
@@ -711,28 +650,43 @@ update_engine() {
 
     printf " Processing and deduplicating..."
 
-    # Add IPv6 entries if IPv6 is enabled
-    if ip a 2>/dev/null | grep -q "inet6"; then
-        grep "^0\.0\.0\.0" "$TEMP_LIST" 2>/dev/null | sed 's/^0\.0\.0\.0/::1/g' >> "$TEMP_LIST"
+    # Build whitelist pattern for awk (if exists)
+    whitelist_pattern=""
+    if [ -f "$WHITELIST_FILE" ] && [ -s "$WHITELIST_FILE" ]; then
+        whitelist_pattern=$(cat "$WHITELIST_FILE" | grep -v '^$' | tr '\n' '|' | sed 's/|$//')
     fi
 
-    # Sort, deduplicate, and clean
-    cat "$TEMP_LIST" 2>/dev/null | \
-        sed '/^$/d' | \
-        sed '/^0\.0\.0\.0 0\.0\.0\.0/d' | \
-        sed '/^::1 0\.0\.0\.0/d' | \
-        sed '/^0\.0\.0\.0 $/d' | \
-        sort -u > "$ADBLOCK_HOSTS"
+    # Sort, deduplicate, clean invalid entries, and apply whitelist in single pass
+    sort -u "$TEMP_LIST" 2>/dev/null | awk -v whitelist="$whitelist_pattern" '
+    BEGIN { if (whitelist != "") split(whitelist, wl, "|") }
+    {
+        # Skip empty or invalid lines
+        if ($0 == "") next
+        if ($2 == "" || $2 == "0.0.0.0") next
+
+        # Check whitelist
+        skip = 0
+        if (whitelist != "") {
+            for (i in wl) {
+                if (index($2, wl[i]) > 0) { skip = 1; break }
+            }
+        }
+        if (!skip) print
+    }' > "$ADBLOCK_HOSTS"
+
+    # Add IPv6 entries if IPv6 is enabled
+    if ip a 2>/dev/null | grep -q "inet6"; then
+        sed 's/^0\.0\.0\.0/::1/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
+        cat "$ADBLOCK_HOSTS" "$ADBLOCK_HOSTS.tmp" > "$ADBLOCK_HOSTS.merged"
+        mv "$ADBLOCK_HOSTS.merged" "$ADBLOCK_HOSTS"
+        rm -f "$ADBLOCK_HOSTS.tmp"
+    fi
 
     println_green "done"
 
-    # Apply whitelist (using # as sed delimiter to avoid conflicts with hostnames)
-    if [ -f "$WHITELIST_FILE" ] && [ -s "$WHITELIST_FILE" ]; then
-        printf " Applying whitelist..."
-        while IFS= read -r hostname || [ -n "$hostname" ]; do
-            [ -n "$hostname" ] && sed -i "#${hostname}#d" "$ADBLOCK_HOSTS"
-        done < "$WHITELIST_FILE"
-        println_green "done"
+    # Whitelist already applied above, show message if it was used
+    if [ -n "$whitelist_pattern" ]; then
+        printf " Whitelist applied...${GREEN}done${NOCOLOR}\n"
     fi
 
     # Cleanup
