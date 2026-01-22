@@ -63,23 +63,26 @@ check_existing() {
     EXISTING_VERSION=""
     EXISTING_PATH=""
 
-    # Check new paths
-    if [ -f "/usr/sbin/helium" ]; then
-        EXISTING_PATH="/usr/sbin/helium"
-        EXISTING_VERSION=$(grep "^VERSION_NUMBER=" "$EXISTING_PATH" 2>/dev/null | cut -d'"' -f2 | head -1)
-    elif [ -f "/usr/local/sbin/helium" ]; then
-        EXISTING_PATH="/usr/local/sbin/helium"
-        EXISTING_VERSION=$(grep "^VERSION_NUMBER=" "$EXISTING_PATH" 2>/dev/null | cut -d'"' -f2 | head -1)
-    # Check old paths (v3.x used helium.sh)
-    elif [ -f "/usr/sbin/helium.sh" ]; then
-        EXISTING_PATH="/usr/sbin/helium.sh"
-        EXISTING_VERSION=$(grep "^VERSIONNUMBER=" "$EXISTING_PATH" 2>/dev/null | cut -d'"' -f2 | head -1)
-    elif [ -f "/usr/local/sbin/helium.sh" ]; then
-        EXISTING_PATH="/usr/local/sbin/helium.sh"
-        EXISTING_VERSION=$(grep "^VERSIONNUMBER=" "$EXISTING_PATH" 2>/dev/null | cut -d'"' -f2 | head -1)
-    fi
+    # Helper function to extract version (handles both v3.x and v4.x format)
+    get_version() {
+        file="$1"
+        # Try v4.x format first (VERSION_NUMBER)
+        ver=$(grep "^VERSION_NUMBER=" "$file" 2>/dev/null | cut -d'"' -f2 | head -1)
+        # Fallback to v3.x format (VERSIONNUMBER)
+        [ -z "$ver" ] && ver=$(grep "^VERSIONNUMBER=" "$file" 2>/dev/null | cut -d'"' -f2 | head -1)
+        echo "$ver"
+    }
 
-    # Also check for config files
+    # Check all possible paths (both helium and helium.sh)
+    for path in "/usr/sbin/helium" "/usr/local/sbin/helium" "/usr/sbin/helium.sh" "/usr/local/sbin/helium.sh"; do
+        if [ -f "$path" ]; then
+            EXISTING_PATH="$path"
+            EXISTING_VERSION=$(get_version "$path")
+            break
+        fi
+    done
+
+    # Also check for config files (orphaned installation)
     if [ -z "$EXISTING_PATH" ] && [ -d "$DNSMASQ_DIR" ]; then
         if [ -f "$DNSMASQ_DIR/adblock.hosts" ] || [ -f "$DNSMASQ_DIR/providers.txt" ]; then
             EXISTING_VERSION="unknown"
