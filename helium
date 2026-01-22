@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.7"
+VERSION_NUMBER="4.0.8"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -147,10 +147,9 @@ press_enter() {
 
 # Read user input with proper terminal settings (fixes backspace on OpenWRT)
 read_input() {
-    # Apply settings to current terminal, read from /dev/tty
+    # Reset terminal to sane defaults (handles backspace automatically)
     stty sane 2>/dev/null
-    stty icanon echo erase ^H 2>/dev/null
-    IFS= read -r REPLY < /dev/tty
+    read -r REPLY
 }
 
 # Validate IPv4 address format
