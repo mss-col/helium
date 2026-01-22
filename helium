@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.1.3"
+VERSION_NUMBER="4.1.4"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -2150,20 +2150,19 @@ do_upgrade_script() {
 # MODERN MAIN MENU
 # =============================================================================
 
-# Print a menu item with icon (left column)
-print_menu_left() {
-    num="$1"
-    icon="$2"
-    label="$3"
-    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[%2s]${NOCOLOR} %s ${WHITE}%-16s${NOCOLOR}" "$num" "$icon" "$label"
-}
-
-# Print a menu item with icon (right column with separator)
-print_menu_right() {
-    num="$1"
-    icon="$2"
-    label="$3"
-    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[%2s]${NOCOLOR} %s ${WHITE}%s${NOCOLOR}" "$num" "$icon" "$label"
+# Print menu row (two columns with emoji)
+print_menu_row() {
+    icon1="$1"
+    num1="$2"
+    label1="$3"
+    icon2="$4"
+    num2="$5"
+    label2="$6"
+    if [ -n "$num2" ]; then
+        printf " ${HE_BORDER}│${NOCOLOR} %s ${HE_ACCENT}[%2s]${NOCOLOR} ${WHITE}%-20s${NOCOLOR}${HE_BORDER}│${NOCOLOR} %s ${HE_ACCENT}[%2s]${NOCOLOR} ${WHITE}%s${NOCOLOR}\n" "$icon1" "$num1" "$label1" "$icon2" "$num2" "$label2"
+    else
+        printf " ${HE_BORDER}│${NOCOLOR} %s ${HE_ACCENT}[%2s]${NOCOLOR} ${WHITE}%-20s${NOCOLOR}${HE_BORDER}│${NOCOLOR}\n" "$icon1" "$num1" "$label1"
+    fi
 }
 
 main_menu() {
@@ -2176,44 +2175,21 @@ main_menu() {
         print_section "Quick Actions" "⚡"
 
         if [ "$OS_TYPE" = "openwrt" ]; then
-            # OpenWrt menu (11 options) - Two column layout with separator
-            print_menu_left "1" "▶️ " "Start Helium"
-            print_menu_right "7" "⛔" "Blacklist Host"
-            printf "\n"
-            print_menu_left "2" "⏹️ " "Stop Helium"
-            print_menu_right "8" "🔄" "Toggle IPv6"
-            printf "\n"
-            print_menu_left "3" "📥" "Update Database"
-            print_menu_right "9" "⬆️ " "Update Helium"
-            printf "\n"
-            print_menu_left "4" "✅" "Activate Provider"
-            print_menu_right "10" "🗑️ " "Uninstall"
-            printf "\n"
-            print_menu_left "5" "❌" "Deactivate Provider"
-            print_menu_right "11" "🚪" "Exit"
-            printf "\n"
-            print_menu_left "6" "✨" "Whitelist Host"
-            printf "\n"
+            # OpenWrt menu (11 options)
+            print_menu_row "🟢" "1" "Start Helium"        "🚫" "7"  "Blacklist Host"
+            print_menu_row "🔴" "2" "Stop Helium"         "🔄" "8"  "Toggle IPv6"
+            print_menu_row "📥" "3" "Update Database"     "📤" "9"  "Update Helium"
+            print_menu_row "➕" "4" "Activate Provider"   "🗑" "10" "Uninstall"
+            print_menu_row "➖" "5" "Deactivate Provider" "🚪" "11" "Exit"
+            print_menu_row "⭐" "6" "Whitelist Host"      ""   ""   ""
         else
-            # Linux server menu (12 options) - Two column layout with separator
-            print_menu_left "1" "▶️ " "Start Helium"
-            print_menu_right "7" "⛔" "Blacklist Host"
-            printf "\n"
-            print_menu_left "2" "⏹️ " "Stop Helium"
-            print_menu_right "8" "🌐" "Change DNS"
-            printf "\n"
-            print_menu_left "3" "📥" "Update Database"
-            print_menu_right "9" "🧹" "Clean Database"
-            printf "\n"
-            print_menu_left "4" "✅" "Activate Provider"
-            print_menu_right "10" "⬆️ " "Update Helium"
-            printf "\n"
-            print_menu_left "5" "❌" "Deactivate Provider"
-            print_menu_right "11" "🗑️ " "Uninstall"
-            printf "\n"
-            print_menu_left "6" "✨" "Whitelist Host"
-            print_menu_right "12" "🚪" "Exit"
-            printf "\n"
+            # Linux server menu (12 options)
+            print_menu_row "🟢" "1" "Start Helium"        "🚫" "7"  "Blacklist Host"
+            print_menu_row "🔴" "2" "Stop Helium"         "🌐" "8"  "Change DNS"
+            print_menu_row "📥" "3" "Update Database"     "🧹" "9"  "Clean Database"
+            print_menu_row "➕" "4" "Activate Provider"   "📤" "10" "Update Helium"
+            print_menu_row "➖" "5" "Deactivate Provider" "🗑" "11" "Uninstall"
+            print_menu_row "⭐" "6" "Whitelist Host"      "🚪" "12" "Exit"
         fi
 
         printf " ${HE_BORDER}│${NOCOLOR}\n"
