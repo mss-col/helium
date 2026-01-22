@@ -23,12 +23,12 @@
 #OneHosts_Lite|Global|🌐|ads,tracker|Balanced - 92K domains="https://o0.pages.dev/Lite/hosts.txt"
 
 # --- Steven Black ---
-#StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+#StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/hosts"
 
 # --- AdGuard Series ---
 #AdGuard_DNS|Global|🌐|ads,tracker|AdGuard DNS filter - 138K domains="https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
-#AdGuard_Base|Global|🌐|ads|Base filter - 61K domains="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt"
-#AdGuard_Tracking|Global|🌐|tracker|Tracking protection - 66K domains="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt"
+#AdGuard_Base|Global|🌐|ads|Base filter - 61K domains="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_2_Base/filter.txt"
+#AdGuard_Tracking|Global|🌐|tracker|Tracking protection - 66K domains="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_3_Spyware/filter.txt"
 
 # --- EasyList Series (⚠️ URL patterns - limited DNS support) ---
 # Note: EasyList uses URL patterns, not domains. Most rules won't work at DNS level.
@@ -38,7 +38,7 @@
 
 # --- Other Global ---
 #hBlock|Global|🌐|ads,tracker,malware|Security & privacy - 438K domains="https://hblock.molinero.dev/hosts"
-#Anudeep_Blacklist|Global|🌐|ads,tracker|Curated list - 42K domains="https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt"
+#Anudeep_Blacklist|Global|🌐|ads,tracker|Curated list - 42K domains="https://cdn.jsdelivr.net/gh/anudeepND/blacklist@master/adservers.txt"
 #DanPollock|Global|🌐|ads,tracker,malware|someonewhocares.org - 12K domains="https://someonewhocares.org/hosts/hosts"
 #PeterLowe|Global|🌐|ads|Ad servers list - 3.5K domains="https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0"
 
@@ -47,21 +47,21 @@
 # =============================================================================
 
 # --- Chinese 🇨🇳 ---
-#AntiAD|Asia|🇨🇳|ads,tracker|Chinese ads - 109K domains="https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt"
+#AntiAD|Asia|🇨🇳|ads,tracker|Chinese ads - 109K domains="https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-domains.txt"
 #EasyList_China|Asia|🇨🇳|ads|⚠️ Mixed format="https://easylist-downloads.adblockplus.org/easylistchina.txt"
 
 # --- Vietnamese 🇻🇳 ---
-#ABPVN|Asia|🇻🇳|ads|Vietnamese AdBlock format="https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt"
-#HostsVN|Asia|🇻🇳|ads|Vietnamese hosts - 17K domains="https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts"
+#ABPVN|Asia|🇻🇳|ads|Vietnamese AdBlock format="https://cdn.jsdelivr.net/gh/abpvn/abpvn@master/filter/abpvn_ublock.txt"
+#HostsVN|Asia|🇻🇳|ads|Vietnamese hosts - 17K domains="https://cdn.jsdelivr.net/gh/bigdargon/hostsVN@master/hosts"
 
 # --- Indonesian 🇮🇩 ---
-#ABPindo|Asia|🇮🇩|ads|Indonesian AdBlock format="https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt"
+#ABPindo|Asia|🇮🇩|ads|Indonesian AdBlock format="https://cdn.jsdelivr.net/gh/ABPindo/indonesianadblockrules@master/subscriptions/abpindo.txt"
 
 # --- Japanese 🇯🇵 ---
 #Blocker280|Asia|🇯🇵|ads|Japanese AdBlock format="https://280blocker.net/files/280blocker_adblock.txt"
 
 # --- Korean 🇰🇷 ---
-#YousList|Asia|🇰🇷|ads|Korean AdBlock format="https://raw.githubusercontent.com/yous/YousList/master/youslist.txt"
+#YousList|Asia|🇰🇷|ads|Korean AdBlock format="https://cdn.jsdelivr.net/gh/yous/YousList@master/youslist.txt"
 
 # =============================================================================
 # [REGIONAL] EUROPE
@@ -69,7 +69,7 @@
 
 # --- Russian 🇷🇺 ---
 #RU_AdList|Europe|🇷🇺|ads|Russian ads - 9K domains="https://easylist-downloads.adblockplus.org/advblock.txt"
-#AdGuard_Russian|Europe|🇷🇺|ads|AdGuard Russian filter="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_1_Russian/filter.txt"
+#AdGuard_Russian|Europe|🇷🇺|ads|AdGuard Russian filter="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_1_Russian/filter.txt"
 
 # --- French 🇫🇷 ---
 #Liste_FR|Europe|🇫🇷|ads|French ads - 7K domains="https://easylist-downloads.adblockplus.org/liste_fr.txt"
@@ -78,7 +78,7 @@
 #EasyList_Germany|Europe|🇩🇪|ads|German ads="https://easylist.to/easylistgermany/easylistgermany.txt"
 
 # --- Polish 🇵🇱 ---
-#CertyficateIT|Europe|🇵🇱|ads|Polish ads="https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-adblock-filters/adblock.txt"
+#CertyficateIT|Europe|🇵🇱|ads|Polish ads="https://cdn.jsdelivr.net/gh/MajkiIT/polish-ads-filter@master/polish-adblock-filters/adblock.txt"
 
 # --- Dutch 🇳🇱 ---
 #EasyList_Dutch|Europe|🇳🇱|ads|Dutch ads="https://easylist-downloads.adblockplus.org/easylistdutch.txt"
@@ -87,30 +87,30 @@
 #EasyList_Italy|Europe|🇮🇹|ads|Italian ads="https://easylist-downloads.adblockplus.org/easylistitaly.txt"
 
 # --- Swedish 🇸🇪 ---
-#Frellwit_Swedish|Europe|🇸🇪|ads,tracker|Swedish hosts - 1K domains="https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Hosts-File.txt"
+#Frellwit_Swedish|Europe|🇸🇪|ads,tracker|Swedish hosts - 1K domains="https://cdn.jsdelivr.net/gh/lassekongo83/Frellwits-filter-lists@master/Frellwits-Swedish-Hosts-File.txt"
 
 # --- Arabic 🇸🇦 ---
 #Liste_AR|Europe|🇸🇦|ads|Arabic ads="https://easylist-downloads.adblockplus.org/Liste_AR.txt"
 
 # --- Hebrew 🇮🇱 ---
-#EasyList_Hebrew|Europe|🇮🇱|ads|Hebrew ads="https://raw.githubusercontent.com/easylist/EasyListHebrew/master/EasyListHebrew.txt"
+#EasyList_Hebrew|Europe|🇮🇱|ads|Hebrew ads="https://cdn.jsdelivr.net/gh/easylist/EasyListHebrew@master/EasyListHebrew.txt"
 
 # =============================================================================
 # [SPECIALIZED] SECURITY & MALWARE
 # =============================================================================
 
-#MalwareFilter|Security|🛡️|malware|Malware domains="https://raw.githubusercontent.com/mss-col/hosts/main/MalwareFilter_Active.txt"
-#MalwareFilterPhishing|Security|🛡️|phishing|Phishing protection="https://raw.githubusercontent.com/mss-col/hosts/main/MalwareFilterPhishing_Active.txt"
-#DandelionAntimalware|Security|🛡️|malware|Anti-malware list="https://raw.githubusercontent.com/mss-col/hosts/main/DandelionAntimalware_Active.txt"
-#MitchellKrogza|Security|🛡️|malware,phishing|Badd Boyz hosts="https://raw.githubusercontent.com/mss-col/hosts/main/MitchellKrogza_Active.txt"
+#MalwareFilter|Security|🛡️|malware|Malware domains="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/MalwareFilter_Active.txt"
+#MalwareFilterPhishing|Security|🛡️|phishing|Phishing protection="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/MalwareFilterPhishing_Active.txt"
+#DandelionAntimalware|Security|🛡️|malware|Anti-malware list="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/DandelionAntimalware_Active.txt"
+#MitchellKrogza|Security|🛡️|malware,phishing|Badd Boyz hosts="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/MitchellKrogza_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] PRIVACY & TRACKING
 # =============================================================================
 
-#NoTracking|Privacy|🔒|tracker|Comprehensive tracking block="https://raw.githubusercontent.com/mss-col/hosts/main/NoTracking_Active.txt"
-#WindowsSpyBlocker|Privacy|🔒|tracker,telemetry|Windows telemetry blocker="https://raw.githubusercontent.com/mss-col/hosts/main/WindowsSpyBlocker_Active.txt"
-#BlocklistProjectTracker|Privacy|🔒|tracker|Tracking domains="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectTracker_Active.txt"
+#NoTracking|Privacy|🔒|tracker|Comprehensive tracking block="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/NoTracking_Active.txt"
+#WindowsSpyBlocker|Privacy|🔒|tracker,telemetry|Windows telemetry blocker="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/WindowsSpyBlocker_Active.txt"
+#BlocklistProjectTracker|Privacy|🔒|tracker|Tracking domains="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/BlocklistProjectTracker_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] SOCIAL MEDIA
@@ -119,62 +119,62 @@
 # Note: Fanboy lists use URL patterns, limited DNS support
 #Fanboy_Annoyance|Social|📱|social,annoyance|⚠️ URL patterns - limited DNS="https://secure.fanboy.co.nz/fanboy-annoyance.txt"
 #Fanboy_Social|Social|📱|social|⚠️ URL patterns - limited DNS="https://easylist.to/easylist/fanboy-social.txt"
-#AdGuard_Social|Social|📱|social|Social media filter="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt"
-#Tiktok|Social|📱|social,tiktok|Block TikTok="https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/tiktok.txt"
-#NoGoogle|Social|📱|google|Block Google services="https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt"
+#AdGuard_Social|Social|📱|social|Social media filter="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_4_Social/filter.txt"
+#Tiktok|Social|📱|social,tiktok|Block TikTok="https://cdn.jsdelivr.net/gh/blocklistproject/Lists@master/tiktok.txt"
+#NoGoogle|Social|📱|google|Block Google services="https://cdn.jsdelivr.net/gh/nickspaargaren/no-google@master/pihole-google.txt"
 
 # =============================================================================
 # [SPECIALIZED] CRYPTOCURRENCY & MINING
 # =============================================================================
 
-#NoCoin|Crypto|💰|crypto,mining|Cryptominer blocker="https://raw.githubusercontent.com/mss-col/hosts/main/NoCoin_Active.txt"
+#NoCoin|Crypto|💰|crypto,mining|Cryptominer blocker="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/NoCoin_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] CONTENT FILTERING
 # =============================================================================
 
-#MSSPornBlockList|Adult|🔞|adult,porn|Adult content blocker="https://raw.githubusercontent.com/mss-col/hosts/main/MSSPornBlockList_Active.txt"
-#BlocklistProjectGambling|Gambling|🎰|gambling|Gambling sites="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectGambling_Active.txt"
+#MSSPornBlockList|Adult|🔞|adult,porn|Adult content blocker="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/MSSPornBlockList_Active.txt"
+#BlocklistProjectGambling|Gambling|🎰|gambling|Gambling sites="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/BlocklistProjectGambling_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] TORRENT & P2P
 # =============================================================================
 
-#BlocklistProjectTorrent|Torrent|🏴‍☠️|torrent|Torrent sites="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectTorrent_Active.txt"
-#SM443TorrentTrackers|Torrent|🏴‍☠️|torrent|Torrent trackers="https://raw.githubusercontent.com/mss-col/hosts/main/SM443TorrentTrackers_Active.txt"
-#SM443TorrentWebsites|Torrent|🏴‍☠️|torrent|Torrent websites="https://raw.githubusercontent.com/mss-col/hosts/main/SM443TorrentWebsites_Active.txt"
+#BlocklistProjectTorrent|Torrent|🏴‍☠️|torrent|Torrent sites="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/BlocklistProjectTorrent_Active.txt"
+#SM443TorrentTrackers|Torrent|🏴‍☠️|torrent|Torrent trackers="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/SM443TorrentTrackers_Active.txt"
+#SM443TorrentWebsites|Torrent|🏴‍☠️|torrent|Torrent websites="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/SM443TorrentWebsites_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] REDIRECT & SCAM
 # =============================================================================
 
-#BlocklistProjectRedirect|Scam|⚠️|redirect,scam|Redirect protection="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectRedirect_Active.txt"
-#DurableNapkin|Scam|⚠️|scam|Scam domains="https://raw.githubusercontent.com/mss-col/hosts/main/DurableNapkin_Active.txt"
+#BlocklistProjectRedirect|Scam|⚠️|redirect,scam|Redirect protection="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/BlocklistProjectRedirect_Active.txt"
+#DurableNapkin|Scam|⚠️|scam|Scam domains="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/DurableNapkin_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] SMART DEVICES
 # =============================================================================
 
 #Perflyst_SmartTV|Device|📺|smarttv,telemetry|Smart TV blocker="https://perflyst.github.io/PiHoleBlocklist/SmartTV.txt"
-#AdGuard_Mobile|Device|📱|mobile,ads|Mobile ads filter="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt"
+#AdGuard_Mobile|Device|📱|mobile,ads|Mobile ads filter="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_11_Mobile/filter.txt"
 
 # =============================================================================
 # [CURATED] CUSTOM LISTS
 # =============================================================================
 
-#D3Host|Curated|⭐|ads,tested|D3ward tested list="https://raw.githubusercontent.com/mss-col/hosts/main/D3Host_Active.txt"
-#AbiDarwishList|Curated|⭐|ads,custom|Abi Darwish curated="https://raw.githubusercontent.com/mss-col/hosts/main/AbiDarwishList_Active.txt"
-#MSSBlockList|Curated|⭐|custom|MSS custom list="https://raw.githubusercontent.com/mss-col/hosts/main/MSSBlockList_Active.txt"
+#D3Host|Curated|⭐|ads,tested|D3ward tested list="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/D3Host_Active.txt"
+#AbiDarwishList|Curated|⭐|ads,custom|Abi Darwish curated="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/AbiDarwishList_Active.txt"
+#MSSBlockList|Curated|⭐|custom|MSS custom list="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/MSSBlockList_Active.txt"
 
 # =============================================================================
 # [LEGACY] MSS-COL HOSTS (Pre-filtered for dnsmasq)
 # =============================================================================
 
-#AdAway|Legacy|📦|ads|AdAway hosts="https://raw.githubusercontent.com/mss-col/hosts/main/AdAway_Active.txt"
-#Ewpratten|Legacy|📦|ads|Ewpratten list="https://raw.githubusercontent.com/mss-col/hosts/main/Ewpratten_Active.txt"
-#SomeoneWhoCares|Legacy|📦|ads,malware|Dan Pollock hosts="https://raw.githubusercontent.com/mss-col/hosts/main/SomeoneWhoCares_Active.txt"
-#BadMojr|Legacy|📦|ads|1Hosts pre-filtered="https://raw.githubusercontent.com/mss-col/hosts/main/BadMojr_Active.txt"
-#AdGuardDefault|Legacy|📦|ads|AdGuard pre-filtered="https://raw.githubusercontent.com/mss-col/hosts/main/AdGuardDefault_Active.txt"
-#EasyListLegacy|Legacy|📦|ads|EasyList pre-filtered="https://raw.githubusercontent.com/mss-col/hosts/main/EasyList_Active.txt"
-#DandelionConsole|Legacy|📦|gaming|Gaming console ads="https://raw.githubusercontent.com/mss-col/hosts/main/DandelionConsole_Active.txt"
-#EssoEchap|Legacy|📦|security|Security list="https://raw.githubusercontent.com/mss-col/hosts/main/EssoEchap_Active.txt"
+#AdAway|Legacy|📦|ads|AdAway hosts="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/AdAway_Active.txt"
+#Ewpratten|Legacy|📦|ads|Ewpratten list="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/Ewpratten_Active.txt"
+#SomeoneWhoCares|Legacy|📦|ads,malware|Dan Pollock hosts="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/SomeoneWhoCares_Active.txt"
+#BadMojr|Legacy|📦|ads|1Hosts pre-filtered="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/BadMojr_Active.txt"
+#AdGuardDefault|Legacy|📦|ads|AdGuard pre-filtered="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/AdGuardDefault_Active.txt"
+#EasyListLegacy|Legacy|📦|ads|EasyList pre-filtered="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/EasyList_Active.txt"
+#DandelionConsole|Legacy|📦|gaming|Gaming console ads="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/DandelionConsole_Active.txt"
+#EssoEchap|Legacy|📦|security|Security list="https://cdn.jsdelivr.net/gh/mss-col/hosts@main/EssoEchap_Active.txt"

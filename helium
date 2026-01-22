@@ -23,7 +23,7 @@ DEAD_HOSTS="${DNSMASQ_DIR}/dead.hosts"
 TEMP_LIST="${DNSMASQ_DIR}/list.tmp"
 
 # Remote URLs
-REMOTE_BASE="https://raw.githubusercontent.com/mss-col/helium/main"
+REMOTE_BASE="https://cdn.jsdelivr.net/gh/mss-col/helium@main"
 REMOTE_PROVIDERS="${REMOTE_BASE}/providers.txt"
 REMOTE_SCRIPT="${REMOTE_BASE}/helium"
 REMOTE_DNSMASQ_CONF="${REMOTE_BASE}/dnsmasq.conf"
@@ -1049,7 +1049,7 @@ do_install() {
         println_yellow "using default"
         # Create minimal default providers
         cat > "$PROVIDERS_FILE" << 'EOF'
-StevenBlack="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+StevenBlack="https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/hosts"
 HaGeZi_Pro="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt"
 EOF
     fi

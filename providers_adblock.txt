@@ -28,10 +28,10 @@ hBlock="https://hblock.molinero.dev/hosts"
 
 # AdGuard Series (github.com/AdguardTeam)
 AdGuard_DNS="https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
-AdGuard_Base="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt"
-AdGuard_Tracking="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt"
-AdGuard_Mobile="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt"
-AdGuard_Social="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt"
+AdGuard_Base="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_2_Base/filter.txt"
+AdGuard_Tracking="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_3_Spyware/filter.txt"
+AdGuard_Mobile="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_11_Mobile/filter.txt"
+AdGuard_Social="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_4_Social/filter.txt"
 
 # EasyList Series (easylist.to)
 EasyList="https://easylist.to/easylist/easylist.txt"
@@ -41,10 +41,10 @@ Fanboy_Social="https://easylist.to/easylist/fanboy-social.txt"
 Fanboy_Cookie="https://secure.fanboy.co.nz/fanboy-cookiemonster.txt"
 
 # Steven Black (github.com/StevenBlack/hosts)
-StevenBlack="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+StevenBlack="https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/hosts"
 
 # Other Global
-Anudeep_Blacklist="https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt"
+Anudeep_Blacklist="https://cdn.jsdelivr.net/gh/anudeepND/blacklist@master/adservers.txt"
 DanPollock="https://someonewhocares.org/hosts/hosts"
 PeterLowe="https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0"
 NoTrack="https://gitlab.com/quidsup/notrack-blocklists/-/raw/master/notrack-blocklist.txt"
@@ -54,22 +54,22 @@ NoTrack="https://gitlab.com/quidsup/notrack-blocklists/-/raw/master/notrack-bloc
 # -----------------------------------------------------------------------------
 
 # Chinese
-AntiAD="https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt"
-AntiAD_Easylist="https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-easylist.txt"
+AntiAD="https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-domains.txt"
+AntiAD_Easylist="https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-easylist.txt"
 EasyList_China="https://easylist-downloads.adblockplus.org/easylistchina.txt"
 
 # Vietnamese
-ABPVN="https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt"
-HostsVN="https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts"
+ABPVN="https://cdn.jsdelivr.net/gh/abpvn/abpvn@master/filter/abpvn_ublock.txt"
+HostsVN="https://cdn.jsdelivr.net/gh/bigdargon/hostsVN@master/hosts"
 
 # Japanese
 Blocker280="https://280blocker.net/files/280blocker_adblock.txt"
 
 # Korean
-YousList="https://raw.githubusercontent.com/yous/YousList/master/youslist.txt"
+YousList="https://cdn.jsdelivr.net/gh/yous/YousList@master/youslist.txt"
 
 # Indonesian
-ABPindo="https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt"
+ABPindo="https://cdn.jsdelivr.net/gh/ABPindo/indonesianadblockrules@master/subscriptions/abpindo.txt"
 
 # -----------------------------------------------------------------------------
 # TIER 3: REGIONAL - EUROPE
@@ -77,7 +77,7 @@ ABPindo="https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master
 
 # Russian
 RU_AdList="https://easylist-downloads.adblockplus.org/advblock.txt"
-AdGuard_Russian="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_1_Russian/filter.txt"
+AdGuard_Russian="https://cdn.jsdelivr.net/gh/AdguardTeam/FiltersRegistry@master/filters/filter_1_Russian/filter.txt"
 
 # French
 Liste_FR="https://easylist-downloads.adblockplus.org/liste_fr.txt"
@@ -86,19 +86,19 @@ Liste_FR="https://easylist-downloads.adblockplus.org/liste_fr.txt"
 EasyList_Germany="https://easylist.to/easylistgermany/easylistgermany.txt"
 
 # Swedish
-Frellwit_Swedish="https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Hosts-File.txt"
+Frellwit_Swedish="https://cdn.jsdelivr.net/gh/lassekongo83/Frellwits-filter-lists@master/Frellwits-Swedish-Hosts-File.txt"
 
 # Polish
-CertyficateIT="https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-adblock-filters/adblock.txt"
+CertyficateIT="https://cdn.jsdelivr.net/gh/MajkiIT/polish-ads-filter@master/polish-adblock-filters/adblock.txt"
 
 # Hebrew
-EasyList_Hebrew="https://raw.githubusercontent.com/easylist/EasyListHebrew/master/EasyListHebrew.txt"
+EasyList_Hebrew="https://cdn.jsdelivr.net/gh/easylist/EasyListHebrew@master/EasyListHebrew.txt"
 
 # Hungarian
 Hufilter="https://cdn.jsdelivr.net/gh/hufilter/hufilter@master/hufilter-dns.txt"
 
 # Czech/Slovak
-EasyList_CzechSlovak="https://raw.githubusercontent.com/tomasko126/easylistczechandslovak/master/filters.txt"
+EasyList_CzechSlovak="https://cdn.jsdelivr.net/gh/tomasko126/easylistczechandslovak@master/filters.txt"
 
 # Arabic
 Liste_AR="https://easylist-downloads.adblockplus.org/Liste_AR.txt"
@@ -113,7 +113,7 @@ EasyList_Italy="https://easylist-downloads.adblockplus.org/easylistitaly.txt"
 EasyList_Lithuania="https://easylist-downloads.adblockplus.org/easylistlithuania.txt"
 
 # Finnish
-Finnish_Easylist="https://raw.githubusercontent.com/finnish-easylist-addition/finnish-easylist-addition/gh-pages/Finland_adb.txt"
+Finnish_Easylist="https://cdn.jsdelivr.net/gh/finnish-easylist-addition/finnish-easylist-addition@gh-pages/Finland_adb.txt"
 
 # Bulgarian
 Bulgarian_List="http://stanev.org/abp/adblock_bg.txt"
@@ -123,7 +123,7 @@ Bulgarian_List="http://stanev.org/abp/adblock_bg.txt"
 # -----------------------------------------------------------------------------
 
 # Block Google Services
-NoGoogle="https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt"
+NoGoogle="https://cdn.jsdelivr.net/gh/nickspaargaren/no-google@master/pihole-google.txt"
 
 # Smart TV Blocklist
 Perflyst_SmartTV="https://perflyst.github.io/PiHoleBlocklist/SmartTV.txt"

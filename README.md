@@ -28,7 +28,7 @@ wget -qO- https://mss-col.github.io/helium/install.sh | sh
 
 Or manual install:
 ```bash
-wget -O /usr/local/sbin/helium https://raw.githubusercontent.com/mss-col/helium/main/helium
+wget -O /usr/local/sbin/helium https://cdn.jsdelivr.net/gh/mss-col/helium@main/helium
 chmod +x /usr/local/sbin/helium
 helium
 ```
@@ -41,7 +41,7 @@ wget -qO- https://mss-col.github.io/helium/install.sh | sh
 
 Or manual install:
 ```bash
-wget -O /usr/sbin/helium https://raw.githubusercontent.com/mss-col/helium/main/helium
+wget -O /usr/sbin/helium https://cdn.jsdelivr.net/gh/mss-col/helium@main/helium
 chmod +x /usr/sbin/helium
 helium
 ```

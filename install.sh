@@ -6,8 +6,8 @@
 
 set -e
 
-REPO_URL="https://raw.githubusercontent.com/mss-col/helium/main/helium"
-REPO_PROVIDERS="https://raw.githubusercontent.com/mss-col/helium/main/providers.txt"
+REPO_URL="https://cdn.jsdelivr.net/gh/mss-col/helium@main/helium"
+REPO_PROVIDERS="https://cdn.jsdelivr.net/gh/mss-col/helium@main/providers.txt"
 
 # Colors
 RED='\033[0;31m'
