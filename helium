@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.4"
+VERSION_NUMBER="4.0.5"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -684,9 +684,9 @@ update_engine() {
         if (!skip) print
     }' > "$ADBLOCK_HOSTS"
 
-    # Add IPv6 entries if IPv6 is enabled
+    # Add IPv6 entries if IPv6 is enabled (use :: not ::1)
     if ip a 2>/dev/null | grep -q "inet6"; then
-        sed 's/^0\.0\.0\.0/::1/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
+        sed 's/^0\.0\.0\.0/::/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
         cat "$ADBLOCK_HOSTS" "$ADBLOCK_HOSTS.tmp" > "$ADBLOCK_HOSTS.merged"
         mv "$ADBLOCK_HOSTS.merged" "$ADBLOCK_HOSTS"
         rm -f "$ADBLOCK_HOSTS.tmp"
@@ -742,7 +742,7 @@ clean_dead_hosts() {
     while IFS= read -r dead_host || [ -n "$dead_host" ]; do
         [ -z "$dead_host" ] && continue
         sed -i "#^0\.0\.0\.0 ${dead_host}$#d" "$ADBLOCK_HOSTS" 2>/dev/null
-        sed -i "#^::1 ${dead_host}$#d" "$ADBLOCK_HOSTS" 2>/dev/null
+        sed -i "#^:: ${dead_host}$#d" "$ADBLOCK_HOSTS" 2>/dev/null
         printf "\n ${dead_host}\t"
         print_red "deleted"
     done < "$DEAD_HOSTS"
