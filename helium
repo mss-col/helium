@@ -422,9 +422,151 @@ restore_resolv() {
 # CORE ENGINE
 # -----------------------------------------------------------------------------
 
+# =============================================================================
+# FORMAT PARSER - Handles multiple blocklist formats
+# =============================================================================
+# Supported formats:
+#   1. Hosts:       0.0.0.0 domain.com / 127.0.0.1 domain.com
+#   2. Domain-only: domain.com
+#   3. Wildcard:    *.domain.com
+#   4. AdBlock:     ||domain.com^
+#   5. AdBlock+opt: ||domain.com^$third-party,popup
+#
+# Skipped entries:
+#   - Comments: ! or #
+#   - Exception rules: @@||domain^
+#   - Element hiding: ##.class, #@#, domain##
+#   - URL patterns: /path/file.js
+#   - IP addresses: 192.168.1.1
+#   - Localhost entries: localhost, broadcasthost
+# =============================================================================
+
+# Process raw blocklist and extract valid domains
+process_blocklist() {
+    # Read from stdin and process line by line
+    while IFS= read -r raw_line || [ -n "$raw_line" ]; do
+        # Trim whitespace
+        line=$(echo "$raw_line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+        # Skip empty lines
+        [ -z "$line" ] && continue
+
+        # Skip comments (! for AdBlock, # for hosts)
+        case "$line" in
+            \!*|\#*|"[Adblock"*) continue ;;
+        esac
+
+        # Skip exception/whitelist rules (@@)
+        case "$line" in
+            @@*) continue ;;
+        esac
+
+        # Skip element hiding rules (##, #@#, #?#)
+        case "$line" in
+            *"##"*|*"#@#"*|*"#?#"*) continue ;;
+        esac
+
+        # Skip URL patterns (start with / but not domain)
+        case "$line" in
+            "/"*) continue ;;
+            *"/"*"/"*) continue ;;  # Contains path
+        esac
+
+        # Skip lines with complex AdBlock syntax
+        case "$line" in
+            *"$"*"="*) continue ;;  # Has options with values
+            "&"*) continue ;;       # URL parameter patterns
+            "-"*) continue ;;       # URL path patterns
+            "."*[/]*) continue ;;   # .com/path patterns
+        esac
+
+        domain=""
+
+        # === Format 1: Hosts format (0.0.0.0 or 127.0.0.1) ===
+        case "$line" in
+            "0.0.0.0 "*|"127.0.0.1 "*)
+                domain=$(echo "$line" | awk '{print $2}')
+                ;;
+            "::1 "*|"fe80:"*|"ff0"*|"255.255.255.255 "*)
+                # Skip IPv6 and broadcast entries
+                continue
+                ;;
+        esac
+
+        # === Format 2: AdBlock format (||domain^) ===
+        if [ -z "$domain" ]; then
+            case "$line" in
+                "||"*)
+                    # Extract domain from ||domain^ or ||domain^$options
+                    domain=$(echo "$line" | sed 's/^||//' | sed 's/\^.*//' | sed 's/\$.*//')
+                    ;;
+            esac
+        fi
+
+        # === Format 3: Wildcard format (*.domain) ===
+        if [ -z "$domain" ]; then
+            case "$line" in
+                "*."*)
+                    domain=$(echo "$line" | sed 's/^\*\.//')
+                    ;;
+            esac
+        fi
+
+        # === Format 4: Domain-only (plain domain) ===
+        if [ -z "$domain" ]; then
+            # Check if it looks like a domain (contains dot, no spaces, no special chars)
+            case "$line" in
+                *" "*|*"/"*|*"="*|*"&"*|*"@"*|*"["*|*"]"*)
+                    # Skip lines with spaces or URL characters
+                    continue
+                    ;;
+                *"."*)
+                    # Looks like a domain
+                    domain="$line"
+                    ;;
+            esac
+        fi
+
+        # Skip if no valid domain extracted
+        [ -z "$domain" ] && continue
+
+        # === Validation: Skip invalid entries ===
+
+        # Skip localhost entries
+        case "$domain" in
+            "localhost"*|"local"|"broadcasthost"|"ip6-"*) continue ;;
+        esac
+
+        # Skip if domain is just an IP address
+        case "$domain" in
+            [0-9]*"."[0-9]*"."[0-9]*"."[0-9]*) continue ;;
+        esac
+
+        # Skip if domain is too short (less than 4 chars like a.co)
+        if [ ${#domain} -lt 4 ]; then
+            continue
+        fi
+
+        # Skip if domain doesn't contain a dot
+        case "$domain" in
+            *"."*) ;;
+            *) continue ;;
+        esac
+
+        # Skip if domain contains invalid characters
+        case "$domain" in
+            *"*"*|*"/"*|*"\\"*|*"?"*|*"#"*|*"!"*|*"$"*|*"^"*) continue ;;
+        esac
+
+        # Output valid domain in hosts format
+        printf "0.0.0.0 %s\n" "$domain"
+
+    done
+}
+
 # Update blocked hostnames from providers
 update_engine() {
-    printf " Updating blocked hostnames..."
+    printf " Updating blocked hostnames...\n"
 
     # Ensure directory exists
     [ ! -d "$DNSMASQ_DIR" ] && mkdir -p "$DNSMASQ_DIR"
@@ -434,9 +576,12 @@ update_engine() {
 
     # Check if providers file exists
     if [ ! -f "$PROVIDERS_FILE" ]; then
-        println_red "failed (providers.txt not found)"
+        println_red " Error: providers.txt not found"
         return 1
     fi
+
+    # Count active providers
+    provider_count=0
 
     # Process each provider
     while IFS= read -r line || [ -n "$line" ]; do
@@ -445,40 +590,45 @@ update_engine() {
             \#*|"") continue ;;
         esac
 
-        # Extract URL from format: ProviderName="URL"
+        # Extract URL from format: ProviderName="URL" or NAME|...|...="URL"
         list_url=$(echo "$line" | cut -d'"' -f2)
+        provider_name=$(echo "$line" | cut -d'|' -f1 | cut -d'=' -f1)
 
         [ -z "$list_url" ] && continue
 
+        provider_count=$((provider_count + 1))
+        printf "   [%d] %s..." "$provider_count" "$provider_name"
+
         # Download and process the list
         if command_exists curl; then
-            curl -sL "$list_url" 2>/dev/null
+            curl -sL --connect-timeout 10 "$list_url" 2>/dev/null
         elif command_exists wget; then
-            wget -qO- "$list_url" 2>/dev/null
-        fi | \
-            sed '/^!/d' | \
-            sed '/^#/d' | \
-            sed '/^$/d' | \
-            sed 's/||/0.0.0.0 /g' | \
-            sed 's/^127\.0\.0\.1 //g' | \
-            sed 's/^0\.0\.0\.0 //g' | \
-            awk -F'^' '{print $1}' | \
-            sed '/^$/d' | \
-            sed 's/^/0.0.0.0 /g' | \
-            grep "^0\.0\.0\.0" >> "$TEMP_LIST"
+            wget -qO- --timeout=10 "$list_url" 2>/dev/null
+        fi | process_blocklist >> "$TEMP_LIST"
+
+        # Show status
+        if [ $? -eq 0 ]; then
+            printf "${GREEN}ok${NOCOLOR}\n"
+        else
+            printf "${RED}failed${NOCOLOR}\n"
+        fi
 
     done < "$PROVIDERS_FILE"
 
     # Add blacklisted hosts
     if [ -f "$BLACKLIST_FILE" ] && [ -s "$BLACKLIST_FILE" ]; then
+        printf "   Adding custom blacklist..."
         while IFS= read -r hostname || [ -n "$hostname" ]; do
             [ -n "$hostname" ] && echo "0.0.0.0 ${hostname}" >> "$TEMP_LIST"
         done < "$BLACKLIST_FILE"
+        printf "${GREEN}ok${NOCOLOR}\n"
     fi
+
+    printf " Processing and deduplicating..."
 
     # Add IPv6 entries if IPv6 is enabled
     if ip a 2>/dev/null | grep -q "inet6"; then
-        grep "^0\.0\.0\.0" "$TEMP_LIST" | sed 's/^0\.0\.0\.0/::1/g' >> "$TEMP_LIST"
+        grep "^0\.0\.0\.0" "$TEMP_LIST" 2>/dev/null | sed 's/^0\.0\.0\.0/::1/g' >> "$TEMP_LIST"
     fi
 
     # Sort, deduplicate, and clean
@@ -486,29 +636,37 @@ update_engine() {
         sed '/^$/d' | \
         sed '/^0\.0\.0\.0 0\.0\.0\.0/d' | \
         sed '/^::1 0\.0\.0\.0/d' | \
+        sed '/^0\.0\.0\.0 $/d' | \
         sort -u > "$ADBLOCK_HOSTS"
+
+    println_green "done"
 
     # Apply whitelist
     if [ -f "$WHITELIST_FILE" ] && [ -s "$WHITELIST_FILE" ]; then
+        printf " Applying whitelist..."
         while IFS= read -r hostname || [ -n "$hostname" ]; do
             [ -n "$hostname" ] && sed -i "/${hostname}/d" "$ADBLOCK_HOSTS"
         done < "$WHITELIST_FILE"
+        println_green "done"
     fi
 
     # Cleanup
     rm -f "$TEMP_LIST"
 
     # Restart dnsmasq to apply changes
+    printf " Restarting dnsmasq..."
     restart_dnsmasq
-
     println_green "done"
 
     # Show count
     if [ -f "$ADBLOCK_HOSTS" ]; then
         count=$(wc -l < "$ADBLOCK_HOSTS" | tr -d ' ')
-        printf " "
+        echo
+        printf " ${GREEN}✓${NOCOLOR} "
         print_green "$count"
-        printf " hostnames have been blocked\n"
+        printf " hostnames blocked from "
+        print_green "$provider_count"
+        printf " providers\n"
     fi
 }
 

@@ -30,9 +30,11 @@ StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.git
 #AdGuard_Base|Global|🌐|ads|Base filter - 61K domains="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt"
 #AdGuard_Tracking|Global|🌐|tracker|Tracking protection - 66K domains="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt"
 
-# --- EasyList Series ---
-#EasyList|Global|🌐|ads|Primary ad filter - 52K domains="https://easylist.to/easylist/easylist.txt"
-#EasyPrivacy|Global|🌐|tracker|Privacy protection - 46K domains="https://easylist.to/easylist/easyprivacy.txt"
+# --- EasyList Series (⚠️ URL patterns - limited DNS support) ---
+# Note: EasyList uses URL patterns, not domains. Most rules won't work at DNS level.
+# Use AdGuard DNS or HaGeZi instead for better DNS-level blocking.
+#EasyList|Global|🌐|ads|⚠️ URL patterns - limited DNS="https://easylist.to/easylist/easylist.txt"
+#EasyPrivacy|Global|🌐|tracker|⚠️ URL patterns - limited DNS="https://easylist.to/easylist/easyprivacy.txt"
 
 # --- Other Global ---
 #hBlock|Global|🌐|ads,tracker,malware|Security & privacy - 438K domains="https://hblock.molinero.dev/hosts"
@@ -46,20 +48,20 @@ StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.git
 
 # --- Chinese 🇨🇳 ---
 #AntiAD|Asia|🇨🇳|ads,tracker|Chinese ads - 109K domains="https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt"
-#EasyList_China|Asia|🇨🇳|ads|Chinese websites="https://easylist-downloads.adblockplus.org/easylistchina.txt"
+#EasyList_China|Asia|🇨🇳|ads|⚠️ Mixed format="https://easylist-downloads.adblockplus.org/easylistchina.txt"
 
 # --- Vietnamese 🇻🇳 ---
-#ABPVN|Asia|🇻🇳|ads|Vietnamese ads - 18K domains="https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt"
+#ABPVN|Asia|🇻🇳|ads|Vietnamese AdBlock format="https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt"
 #HostsVN|Asia|🇻🇳|ads|Vietnamese hosts - 17K domains="https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts"
 
 # --- Indonesian 🇮🇩 ---
-#ABPindo|Asia|🇮🇩|ads|Indonesian ads="https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt"
+#ABPindo|Asia|🇮🇩|ads|Indonesian AdBlock format="https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt"
 
 # --- Japanese 🇯🇵 ---
-#Blocker280|Asia|🇯🇵|ads|Japanese ads - 3K domains="https://280blocker.net/files/280blocker_adblock.txt"
+#Blocker280|Asia|🇯🇵|ads|Japanese AdBlock format="https://280blocker.net/files/280blocker_adblock.txt"
 
 # --- Korean 🇰🇷 ---
-#YousList|Asia|🇰🇷|ads|Korean ads="https://raw.githubusercontent.com/yous/YousList/master/youslist.txt"
+#YousList|Asia|🇰🇷|ads|Korean AdBlock format="https://raw.githubusercontent.com/yous/YousList/master/youslist.txt"
 
 # =============================================================================
 # [REGIONAL] EUROPE
@@ -114,8 +116,9 @@ StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.git
 # [SPECIALIZED] SOCIAL MEDIA
 # =============================================================================
 
-#Fanboy_Annoyance|Social|📱|social,annoyance|Social widgets & popups="https://secure.fanboy.co.nz/fanboy-annoyance.txt"
-#Fanboy_Social|Social|📱|social|Social media buttons="https://easylist.to/easylist/fanboy-social.txt"
+# Note: Fanboy lists use URL patterns, limited DNS support
+#Fanboy_Annoyance|Social|📱|social,annoyance|⚠️ URL patterns - limited DNS="https://secure.fanboy.co.nz/fanboy-annoyance.txt"
+#Fanboy_Social|Social|📱|social|⚠️ URL patterns - limited DNS="https://easylist.to/easylist/fanboy-social.txt"
 #AdGuard_Social|Social|📱|social|Social media filter="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt"
 Tiktok|Social|📱|social,tiktok|Block TikTok="https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/tiktok.txt"
 #NoGoogle|Social|📱|google|Block Google services="https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt"
