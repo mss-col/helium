@@ -8,8 +8,8 @@
 # =============================================================================
 
 # --- HaGeZi Series (Recommended) ---
-HaGeZi_Ultimate|Global|🌐|ads,tracker,malware|Maximum protection - 349K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/ultimate.txt"
-HaGeZi_ProPlus|Global|🌐|ads,tracker,malware|Extended protection - 246K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.plus.txt"
+#HaGeZi_Ultimate|Global|🌐|ads,tracker,malware|Maximum protection - 349K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/ultimate.txt"
+#HaGeZi_ProPlus|Global|🌐|ads,tracker,malware|Extended protection - 246K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.plus.txt"
 #HaGeZi_Pro|Global|🌐|ads,tracker|Pro protection - 194K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt"
 #HaGeZi_Normal|Global|🌐|ads,tracker|Standard protection - 145K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/multi.txt"
 #HaGeZi_Light|Global|🌐|ads|Light protection - 51K domains="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/light.txt"
@@ -23,7 +23,7 @@ HaGeZi_ProPlus|Global|🌐|ads,tracker,malware|Extended protection - 246K domain
 #OneHosts_Lite|Global|🌐|ads,tracker|Balanced - 92K domains="https://o0.pages.dev/Lite/hosts.txt"
 
 # --- Steven Black ---
-StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+#StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
 
 # --- AdGuard Series ---
 #AdGuard_DNS|Global|🌐|ads,tracker|AdGuard DNS filter - 138K domains="https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
@@ -120,27 +120,27 @@ StevenBlack|Global|🌐|ads,malware|Unified hosts - 70K domains="https://raw.git
 #Fanboy_Annoyance|Social|📱|social,annoyance|⚠️ URL patterns - limited DNS="https://secure.fanboy.co.nz/fanboy-annoyance.txt"
 #Fanboy_Social|Social|📱|social|⚠️ URL patterns - limited DNS="https://easylist.to/easylist/fanboy-social.txt"
 #AdGuard_Social|Social|📱|social|Social media filter="https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt"
-Tiktok|Social|📱|social,tiktok|Block TikTok="https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/tiktok.txt"
+#Tiktok|Social|📱|social,tiktok|Block TikTok="https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/tiktok.txt"
 #NoGoogle|Social|📱|google|Block Google services="https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt"
 
 # =============================================================================
 # [SPECIALIZED] CRYPTOCURRENCY & MINING
 # =============================================================================
 
-NoCoin|Crypto|💰|crypto,mining|Cryptominer blocker="https://raw.githubusercontent.com/mss-col/hosts/main/NoCoin_Active.txt"
+#NoCoin|Crypto|💰|crypto,mining|Cryptominer blocker="https://raw.githubusercontent.com/mss-col/hosts/main/NoCoin_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] CONTENT FILTERING
 # =============================================================================
 
 #MSSPornBlockList|Adult|🔞|adult,porn|Adult content blocker="https://raw.githubusercontent.com/mss-col/hosts/main/MSSPornBlockList_Active.txt"
-BlocklistProjectGambling|Gambling|🎰|gambling|Gambling sites="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectGambling_Active.txt"
+#BlocklistProjectGambling|Gambling|🎰|gambling|Gambling sites="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectGambling_Active.txt"
 
 # =============================================================================
 # [SPECIALIZED] TORRENT & P2P
 # =============================================================================
 
-BlocklistProjectTorrent|Torrent|🏴‍☠️|torrent|Torrent sites="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectTorrent_Active.txt"
+#BlocklistProjectTorrent|Torrent|🏴‍☠️|torrent|Torrent sites="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectTorrent_Active.txt"
 #SM443TorrentTrackers|Torrent|🏴‍☠️|torrent|Torrent trackers="https://raw.githubusercontent.com/mss-col/hosts/main/SM443TorrentTrackers_Active.txt"
 #SM443TorrentWebsites|Torrent|🏴‍☠️|torrent|Torrent websites="https://raw.githubusercontent.com/mss-col/hosts/main/SM443TorrentWebsites_Active.txt"
 
@@ -148,7 +148,7 @@ BlocklistProjectTorrent|Torrent|🏴‍☠️|torrent|Torrent sites="https://raw
 # [SPECIALIZED] REDIRECT & SCAM
 # =============================================================================
 
-BlocklistProjectRedirect|Scam|⚠️|redirect,scam|Redirect protection="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectRedirect_Active.txt"
+#BlocklistProjectRedirect|Scam|⚠️|redirect,scam|Redirect protection="https://raw.githubusercontent.com/mss-col/hosts/main/BlocklistProjectRedirect_Active.txt"
 #DurableNapkin|Scam|⚠️|scam|Scam domains="https://raw.githubusercontent.com/mss-col/hosts/main/DurableNapkin_Active.txt"
 
 # =============================================================================
@@ -162,8 +162,8 @@ BlocklistProjectRedirect|Scam|⚠️|redirect,scam|Redirect protection="https://
 # [CURATED] CUSTOM LISTS
 # =============================================================================
 
-D3Host|Curated|⭐|ads,tested|D3ward tested list="https://raw.githubusercontent.com/mss-col/hosts/main/D3Host_Active.txt"
-AbiDarwishList|Curated|⭐|ads,custom|Abi Darwish curated="https://raw.githubusercontent.com/mss-col/hosts/main/AbiDarwishList_Active.txt"
+#D3Host|Curated|⭐|ads,tested|D3ward tested list="https://raw.githubusercontent.com/mss-col/hosts/main/D3Host_Active.txt"
+#AbiDarwishList|Curated|⭐|ads,custom|Abi Darwish curated="https://raw.githubusercontent.com/mss-col/hosts/main/AbiDarwishList_Active.txt"
 #MSSBlockList|Curated|⭐|custom|MSS custom list="https://raw.githubusercontent.com/mss-col/hosts/main/MSSBlockList_Active.txt"
 
 # =============================================================================
