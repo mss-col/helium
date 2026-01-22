@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.6"
+VERSION_NUMBER="4.0.7"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -798,7 +798,10 @@ print_machine_info() {
     println_white " Machine Info"
 
     # CPU (supports x86, ARM, MIPS - including OpenWRT)
-    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -Ei "model name|system type|Hardware|^Processor|cpu model" | head -1 | cut -d':' -f2 | sed 's/^ //' | cut -c1-40)
+    # Priority: model name > system type > Hardware > cpu model
+    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "^model name|^system type|^Hardware|^cpu model" | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
+    # Fallback: try Model (RPi) if nothing found
+    [ -z "$cpu_model" ] && cpu_model=$(grep -E "^Model" /proc/cpuinfo 2>/dev/null | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
     cpu_cores=$(grep -c "^processor" /proc/cpuinfo 2>/dev/null || echo "1")
 
     if [ "$cpu_cores" = "1" ]; then
