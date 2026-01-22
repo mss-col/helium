@@ -943,18 +943,145 @@ parse_provider_line() {
     P_ACTIVE=$is_active
 }
 
+# Build provider index file for number-based selection
+# Creates: /tmp/helium_providers.idx with format: NUMBER|NAME|ACTIVE
+build_provider_index() {
+    tmp_file="${PROVIDERS_FILE}.tmp"
+    idx_file="/tmp/helium_providers.idx"
+
+    : > "$idx_file"
+    idx=1
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            ""|"# "*|"#-"*|"#="*|"# =="*) continue ;;
+        esac
+
+        case "$line" in
+            *"="*)
+                parse_provider_line "$line"
+                echo "${idx}|${P_NAME}|${P_ACTIVE}" >> "$idx_file"
+                idx=$((idx + 1))
+                ;;
+        esac
+    done < "$tmp_file"
+}
+
+# Get provider name by number from index
+get_provider_name() {
+    num="$1"
+    idx_file="/tmp/helium_providers.idx"
+    grep "^${num}|" "$idx_file" 2>/dev/null | cut -d'|' -f2
+}
+
+# Get provider active status by number
+get_provider_status() {
+    num="$1"
+    idx_file="/tmp/helium_providers.idx"
+    grep "^${num}|" "$idx_file" 2>/dev/null | cut -d'|' -f3
+}
+
+# Get total provider count
+get_provider_count() {
+    idx_file="/tmp/helium_providers.idx"
+    wc -l < "$idx_file" 2>/dev/null | tr -d ' '
+}
+
+# Activate single provider by name
+activate_provider_by_name() {
+    name="$1"
+    tmp_file="${PROVIDERS_FILE}.tmp"
+
+    if grep -q "^#${name}|" "$tmp_file" 2>/dev/null; then
+        sed -i "s/^#${name}|/${name}|/" "$tmp_file"
+        return 0
+    elif grep -q "^#${name}=" "$tmp_file" 2>/dev/null; then
+        sed -i "s/^#${name}=/${name}=/" "$tmp_file"
+        return 0
+    elif grep -q "^${name}|" "$tmp_file" 2>/dev/null || grep -q "^${name}=" "$tmp_file" 2>/dev/null; then
+        return 1  # Already active
+    fi
+    return 2  # Not found
+}
+
+# Deactivate single provider by name
+deactivate_provider_by_name() {
+    name="$1"
+    tmp_file="${PROVIDERS_FILE}.tmp"
+
+    if grep -q "^${name}|" "$tmp_file" 2>/dev/null; then
+        sed -i "s/^${name}|/#${name}|/" "$tmp_file"
+        return 0
+    elif grep -q "^${name}=" "$tmp_file" 2>/dev/null; then
+        sed -i "s/^${name}=/#${name}=/" "$tmp_file"
+        return 0
+    elif grep -q "^#${name}|" "$tmp_file" 2>/dev/null || grep -q "^#${name}=" "$tmp_file" 2>/dev/null; then
+        return 1  # Already inactive
+    fi
+    return 2  # Not found
+}
+
+# Parse selection input and return list of numbers
+# Supports: single (3), multiple (1,3,5), range (1-5), all (A)
+parse_selection_input() {
+    input="$1"
+    max_num="$2"
+
+    # Handle 'A' for all
+    case "$input" in
+        [aA])
+            i=1
+            while [ "$i" -le "$max_num" ]; do
+                printf "%d " "$i"
+                i=$((i + 1))
+            done
+            return 0
+            ;;
+    esac
+
+    # Replace comma with space and process each part
+    input_clean=$(echo "$input" | tr ',' ' ')
+
+    for part in $input_clean; do
+        # Check if range (contains -)
+        case "$part" in
+            *-*)
+                start=$(echo "$part" | cut -d'-' -f1)
+                end=$(echo "$part" | cut -d'-' -f2)
+                # Validate numbers
+                if [ "$start" -ge 1 ] 2>/dev/null && [ "$end" -le "$max_num" ] 2>/dev/null && [ "$start" -le "$end" ]; then
+                    i=$start
+                    while [ "$i" -le "$end" ]; do
+                        printf "%d " "$i"
+                        i=$((i + 1))
+                    done
+                fi
+                ;;
+            *)
+                # Single number
+                if [ "$part" -ge 1 ] 2>/dev/null && [ "$part" -le "$max_num" ] 2>/dev/null; then
+                    printf "%d " "$part"
+                fi
+                ;;
+        esac
+    done
+}
+
 show_providers_list() {
     tmp_file="${PROVIDERS_FILE}.tmp"
     [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
 
-    current_category=""
+    # Build index
+    build_provider_index
+
     active_count=0
     inactive_count=0
+    idx=1
 
     # First pass: count active/inactive
     while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in
-            \#\#*|"#"|"") continue ;;  # Skip section headers and empty
+            \#\#*|"#"|"") continue ;;
             \#*=*|*=*)
                 case "$line" in
                     \#*) inactive_count=$((inactive_count + 1)) ;;
@@ -965,50 +1092,35 @@ show_providers_list() {
     done < "$tmp_file"
 
     printf " ${WHITE}Providers: ${GREEN}%d active${NOCOLOR} / ${RED}%d inactive${NOCOLOR}\n" "$active_count" "$inactive_count"
-    echo " ══════════════════════════════════════════════════════════════════"
-    printf " ${WHITE}%-3s %-20s %-8s %-4s %-28s${NOCOLOR}\n" "ST" "NAME" "CATEGORY" "REG" "DESCRIPTION"
-    echo " ──────────────────────────────────────────────────────────────────"
+    echo " ═══════════════════════════════════════════════════════════════════════"
+    printf " ${WHITE}%-3s %3s  %-18s %-8s %-3s %-26s${NOCOLOR}\n" "ST" "#" "NAME" "CATEGORY" "REG" "DESCRIPTION"
+    echo " ───────────────────────────────────────────────────────────────────────"
 
-    # Second pass: display providers
+    # Second pass: display providers with numbers
     while IFS= read -r line || [ -n "$line" ]; do
-        # Skip pure comments (section headers) and empty lines
         case "$line" in
             ""|"# "*|"#-"*|"#="*|"# =="*) continue ;;
         esac
 
-        # Only process lines with = (provider definitions)
         case "$line" in
             *"="*)
                 parse_provider_line "$line"
 
-                # Truncate long names/descriptions
-                disp_name=$(echo "$P_NAME" | cut -c1-20)
+                disp_name=$(echo "$P_NAME" | cut -c1-18)
                 disp_cat=$(echo "$P_CATEGORY" | cut -c1-8)
-                disp_desc=$(echo "$P_DESC" | cut -c1-28)
+                disp_desc=$(echo "$P_DESC" | cut -c1-26)
 
                 if [ "$P_ACTIVE" = "1" ]; then
-                    printf " ${GREEN}%-3s${NOCOLOR} %-20s %-8s %-4s %-28s\n" "[✓]" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
+                    printf " ${GREEN}[✓]${NOCOLOR} %3d  %-18s %-8s %-3s %-26s\n" "$idx" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
                 else
-                    printf " ${RED}%-3s${NOCOLOR} ${WHITE}%-20s${NOCOLOR} %-8s %-4s %-28s\n" "[ ]" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
+                    printf " ${RED}[ ]${NOCOLOR} %3d  ${WHITE}%-18s${NOCOLOR} %-8s %-3s %-26s\n" "$idx" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
                 fi
+                idx=$((idx + 1))
                 ;;
         esac
     done < "$tmp_file"
 
-    echo " ──────────────────────────────────────────────────────────────────"
-}
-
-show_providers_by_category() {
-    tmp_file="${PROVIDERS_FILE}.tmp"
-    [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
-
-    printf " ${WHITE}Filter by Category:${NOCOLOR}\n"
-    echo " [1] All          [5] Security    [9] Torrent"
-    echo " [2] Global       [6] Privacy     [10] Scam"
-    echo " [3] Asia         [7] Social      [11] Device"
-    echo " [4] Europe       [8] Crypto      [12] Curated"
-    echo
-    printf " Enter filter [1-12] or provider name: "
+    echo " ───────────────────────────────────────────────────────────────────────"
 }
 
 do_activate_provider() {
@@ -1027,15 +1139,14 @@ do_activate_provider() {
     [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
 
     show_providers_list
+    max_num=$(get_provider_count)
     echo
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
         printf " ${YELLOW}[Unsaved changes]${NOCOLOR}\n"
-        printf " Type provider name to activate, ${GREEN}s${NOCOLOR}=save, ${RED}c${NOCOLOR}=cancel: "
-    else
-        printf " Type provider name to activate (${RED}c${NOCOLOR}=cancel): "
     fi
+    printf " ${WHITE}Select:${NOCOLOR} 3 | 1,3,5 | 1-5 | ${GREEN}A${NOCOLOR}=all  (${GREEN}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel): "
     read -r selection
 
     case "$selection" in
@@ -1056,24 +1167,37 @@ do_activate_provider() {
             return
             ;;
         *)
-            # Try to activate the provider (handle both new and legacy formats)
-            # New format: #NAME|... or NAME|...
-            # Legacy format: #NAME=... or NAME=...
-            if grep -q "^#${selection}|" "$tmp_file" 2>/dev/null; then
-                sed -i "s/^#${selection}|/${selection}|/" "$tmp_file"
-                printf " ${GREEN}✓${NOCOLOR} %s activated\n" "$selection"
+            # Parse selection and process each number
+            numbers=$(parse_selection_input "$selection" "$max_num")
+            activated=0
+            skipped=0
+
+            for num in $numbers; do
+                name=$(get_provider_name "$num")
+                if [ -n "$name" ]; then
+                    activate_provider_by_name "$name"
+                    result=$?
+                    if [ $result -eq 0 ]; then
+                        printf " ${GREEN}✓${NOCOLOR} #%d %s activated\n" "$num" "$name"
+                        activated=$((activated + 1))
+                    elif [ $result -eq 1 ]; then
+                        skipped=$((skipped + 1))
+                    fi
+                fi
+            done
+
+            if [ $activated -gt 0 ] || [ $skipped -gt 0 ]; then
+                printf " ${GREEN}%d activated${NOCOLOR}" "$activated"
+                [ $skipped -gt 0 ] && printf ", ${YELLOW}%d already active${NOCOLOR}" "$skipped"
+                printf "\n"
                 sleep 1
-            elif grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
-                sed -i "s/^#${selection}=/${selection}=/" "$tmp_file"
-                printf " ${GREEN}✓${NOCOLOR} %s activated\n" "$selection"
-                sleep 1
-            elif grep -q "^${selection}|" "$tmp_file" 2>/dev/null || grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
-                printf " ${YELLOW}!${NOCOLOR} %s is already active\n" "$selection"
-                sleep 1
-            else
-                printf " ${RED}✗${NOCOLOR} %s not found in providers list\n" "$selection"
+            elif [ -z "$numbers" ]; then
+                printf " ${RED}✗${NOCOLOR} Invalid selection\n"
                 sleep 1
             fi
+
+            # Rebuild index after changes
+            build_provider_index
             do_activate_provider
             ;;
     esac
@@ -1095,15 +1219,14 @@ do_deactivate_provider() {
     [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
 
     show_providers_list
+    max_num=$(get_provider_count)
     echo
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
         printf " ${YELLOW}[Unsaved changes]${NOCOLOR}\n"
-        printf " Type provider name to deactivate, ${GREEN}s${NOCOLOR}=save, ${RED}c${NOCOLOR}=cancel: "
-    else
-        printf " Type provider name to deactivate (${RED}c${NOCOLOR}=cancel): "
     fi
+    printf " ${WHITE}Select:${NOCOLOR} 3 | 1,3,5 | 1-5 | ${RED}A${NOCOLOR}=all  (${GREEN}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel): "
     read -r selection
 
     case "$selection" in
@@ -1124,24 +1247,37 @@ do_deactivate_provider() {
             return
             ;;
         *)
-            # Try to deactivate the provider (handle both new and legacy formats)
-            # New format: NAME|... → #NAME|...
-            # Legacy format: NAME=... → #NAME=...
-            if grep -q "^${selection}|" "$tmp_file" 2>/dev/null; then
-                sed -i "s/^${selection}|/#${selection}|/" "$tmp_file"
-                printf " ${RED}✗${NOCOLOR} %s deactivated\n" "$selection"
+            # Parse selection and process each number
+            numbers=$(parse_selection_input "$selection" "$max_num")
+            deactivated=0
+            skipped=0
+
+            for num in $numbers; do
+                name=$(get_provider_name "$num")
+                if [ -n "$name" ]; then
+                    deactivate_provider_by_name "$name"
+                    result=$?
+                    if [ $result -eq 0 ]; then
+                        printf " ${RED}✗${NOCOLOR} #%d %s deactivated\n" "$num" "$name"
+                        deactivated=$((deactivated + 1))
+                    elif [ $result -eq 1 ]; then
+                        skipped=$((skipped + 1))
+                    fi
+                fi
+            done
+
+            if [ $deactivated -gt 0 ] || [ $skipped -gt 0 ]; then
+                printf " ${RED}%d deactivated${NOCOLOR}" "$deactivated"
+                [ $skipped -gt 0 ] && printf ", ${YELLOW}%d already inactive${NOCOLOR}" "$skipped"
+                printf "\n"
                 sleep 1
-            elif grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
-                sed -i "s/^${selection}=/#${selection}=/" "$tmp_file"
-                printf " ${RED}✗${NOCOLOR} %s deactivated\n" "$selection"
-                sleep 1
-            elif grep -q "^#${selection}|" "$tmp_file" 2>/dev/null || grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
-                printf " ${YELLOW}!${NOCOLOR} %s is already inactive\n" "$selection"
-                sleep 1
-            else
-                printf " ${RED}✗${NOCOLOR} %s not found in providers list\n" "$selection"
+            elif [ -z "$numbers" ]; then
+                printf " ${RED}✗${NOCOLOR} Invalid selection\n"
                 sleep 1
             fi
+
+            # Rebuild index after changes
+            build_provider_index
             do_deactivate_provider
             ;;
     esac
