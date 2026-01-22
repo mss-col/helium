@@ -149,7 +149,7 @@ echo "0 5 * * 0 /usr/sbin/helium --upgrade >/dev/null 2>&1" >> /etc/crontabs/roo
 ## Screenshots
 
 ### Efficiency Test
-Test Helium at [d3ward AdBlock Tester](https://d3ward.github.io/toolz/adblock.html)
+Test Helium at [TurtleCute AdBlock Tester](https://adblock.turtlecute.org)
 
 <p align="center">
   <img src="d3ward2.png" alt="AdBlock Test Result">
