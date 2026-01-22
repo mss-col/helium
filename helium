@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.9"
+VERSION_NUMBER="4.0.10"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -800,8 +800,23 @@ print_machine_info() {
     cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "^model name|^system type|^Hardware|^cpu model" | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
     # Fallback 1: try Model field (RPi)
     [ -z "$cpu_model" ] && cpu_model=$(grep -E "^Model" /proc/cpuinfo 2>/dev/null | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
-    # Fallback 2: ARM64 devicetree (OpenWRT ARM64 routers)
-    [ -z "$cpu_model" ] && cpu_model=$(cat /sys/firmware/devicetree/base/model 2>/dev/null | tr -d '\0' | cut -c1-40)
+    # Fallback 2: ARM64 - parse CPU part code
+    if [ -z "$cpu_model" ]; then
+        cpu_part=$(grep -m1 "^CPU part" /proc/cpuinfo 2>/dev/null | cut -d':' -f2 | tr -d ' ')
+        case "$cpu_part" in
+            0xd03) cpu_model="ARM Cortex-A53" ;;
+            0xd04) cpu_model="ARM Cortex-A35" ;;
+            0xd05) cpu_model="ARM Cortex-A55" ;;
+            0xd07) cpu_model="ARM Cortex-A57" ;;
+            0xd08) cpu_model="ARM Cortex-A72" ;;
+            0xd09) cpu_model="ARM Cortex-A73" ;;
+            0xd0a) cpu_model="ARM Cortex-A75" ;;
+            0xd0b) cpu_model="ARM Cortex-A76" ;;
+            0xd41) cpu_model="ARM Cortex-A78" ;;
+            0xd44) cpu_model="ARM Cortex-X1" ;;
+            *) [ -n "$cpu_part" ] && cpu_model="ARMv8 ($cpu_part)" ;;
+        esac
+    fi
     cpu_cores=$(grep -c "^processor" /proc/cpuinfo 2>/dev/null || echo "1")
 
     if [ "$cpu_cores" = "1" ]; then
