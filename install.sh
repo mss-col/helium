@@ -1,6 +1,6 @@
 #!/bin/sh
 # =============================================================================
-# Helium Universal Installer v4.0.8
+# Helium Universal Installer v4.0.9
 # Smart installer with upgrade detection
 # =============================================================================
 
@@ -24,7 +24,7 @@ print_banner() {
     echo " |  _  |  __/ | | |_| | | | | | |"
     echo " |_| |_|\___|_|_|\__,_|_| |_| |_|"
     echo ""
-    echo " Universal DNS Ad Blocker v4.0.8"
+    echo " Universal DNS Ad Blocker v4.0.9"
     echo ""
 }
 
@@ -157,7 +157,7 @@ do_fresh_install() {
     fi
 
     # Download new script
-    echo " [5/6] Downloading Helium v4.0.8..."
+    echo " [5/6] Downloading Helium v4.0.9..."
     download_file "$REPO_URL" "$INSTALL_PATH"
     chmod +x "$INSTALL_PATH"
 
@@ -198,7 +198,7 @@ do_upgrade() {
     rm -f /usr/local/sbin/helium_daily 2>/dev/null || true
 
     # Download new script
-    echo " [4/5] Downloading Helium v4.0.8..."
+    echo " [4/5] Downloading Helium v4.0.9..."
     download_file "$REPO_URL" "$INSTALL_PATH"
     chmod +x "$INSTALL_PATH"
 

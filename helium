@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.8"
+VERSION_NUMBER="4.0.9"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -796,11 +796,12 @@ print_helium_status() {
 print_machine_info() {
     println_white " Machine Info"
 
-    # CPU (supports x86, ARM, MIPS - including OpenWRT)
-    # Priority: model name > system type > Hardware > cpu model
+    # CPU detection (supports x86, ARM32, ARM64, MIPS)
     cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "^model name|^system type|^Hardware|^cpu model" | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
-    # Fallback: try Model (RPi) if nothing found
+    # Fallback 1: try Model field (RPi)
     [ -z "$cpu_model" ] && cpu_model=$(grep -E "^Model" /proc/cpuinfo 2>/dev/null | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
+    # Fallback 2: ARM64 devicetree (OpenWRT ARM64 routers)
+    [ -z "$cpu_model" ] && cpu_model=$(cat /sys/firmware/devicetree/base/model 2>/dev/null | tr -d '\0' | cut -c1-40)
     cpu_cores=$(grep -c "^processor" /proc/cpuinfo 2>/dev/null || echo "1")
 
     if [ "$cpu_cores" = "1" ]; then
