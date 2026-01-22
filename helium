@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.0.10"
+VERSION_NUMBER="4.1.0"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -29,12 +29,59 @@ REMOTE_SCRIPT="${REMOTE_BASE}/helium"
 REMOTE_DNSMASQ_CONF="${REMOTE_BASE}/dnsmasq.conf"
 REMOTE_DEAD_HOSTS="${REMOTE_BASE}/dead.hosts"
 
-# Colors (ANSI escape codes)
+# =============================================================================
+# MODERN UI COLORS (256-color + True Color support)
+# Matching Helium website design language
+# =============================================================================
+
+# Base Colors (ANSI)
 GREEN="\033[1;32m"
 RED="\033[1;31m"
 YELLOW="\033[1;33m"
-WHITE="\033[1m"
+WHITE="\033[1;37m"
 NOCOLOR="\033[0m"
+
+# Extended Colors (256-color mode)
+CYAN="\033[1;36m"
+BLUE="\033[1;34m"
+MAGENTA="\033[1;35m"
+DIM="\033[2m"
+BOLD="\033[1m"
+ITALIC="\033[3m"
+
+# Helium Theme Colors (256-color approximation of website palette)
+# accent: #58a6ff → Blue 75
+# success: #3fb950 → Green 78
+# warning: #d29922 → Yellow 178
+# text-secondary: #8b949e → Gray 245
+HE_ACCENT="\033[38;5;75m"      # Bright blue (accent)
+HE_SUCCESS="\033[38;5;78m"     # Green (success)
+HE_WARNING="\033[38;5;178m"    # Orange/Yellow (warning)
+HE_MUTED="\033[38;5;245m"      # Gray (muted text)
+HE_BORDER="\033[38;5;240m"     # Dark gray (borders)
+HE_HEADER="\033[38;5;117m"     # Light cyan (headers)
+HE_HIGHLIGHT="\033[38;5;159m"  # Light blue highlight
+
+# Background Colors for badges
+BG_SUCCESS="\033[48;5;22m"     # Dark green background
+BG_ERROR="\033[48;5;52m"       # Dark red background
+BG_WARNING="\033[48;5;94m"     # Dark orange background
+BG_INFO="\033[48;5;24m"        # Dark blue background
+
+# Unicode Box Drawing Characters
+BOX_TL="╭"  # Top left
+BOX_TR="╮"  # Top right
+BOX_BL="╰"  # Bottom left
+BOX_BR="╯"  # Bottom right
+BOX_H="─"   # Horizontal
+BOX_V="│"   # Vertical
+BOX_VR="├"  # Vertical right
+BOX_VL="┤"  # Vertical left
+BOX_HD="┬"  # Horizontal down
+BOX_HU="┴"  # Horizontal up
+BOX_CROSS="┼"
+BOX_HEAVY_H="━"
+BOX_DOUBLE_H="═"
 
 # Runtime variables (set by detect_environment)
 OS_TYPE=""
@@ -70,15 +117,71 @@ clear_screen() {
     printf '\033[3J'
 }
 
-# Print header
+# =============================================================================
+# MODERN UI COMPONENTS
+# =============================================================================
+
+# Print modern header with ASCII art
 print_header() {
-    println_green " ${VERSION_NAME} v${VERSION_NUMBER}"
-    print_white " by Abi Darwish & MSS"
+    printf "\n"
+    printf " ${HE_ACCENT}╭─────────────────────────────────────────────────────────────────╮${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██╗  ██╗███████╗██╗     ██╗██╗   ██╗███╗   ███╗${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██║  ██║██╔════╝██║     ██║██║   ██║████╗ ████║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}███████║█████╗  ██║     ██║██║   ██║██╔████╔██║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██╔══██║██╔══╝  ██║     ██║██║   ██║██║╚██╔╝██║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██║  ██║███████╗███████╗██║╚██████╔╝██║ ╚═╝ ██║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}╚═╝  ╚═╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝     ╚═╝${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_MUTED}🛡️  Universal DNS-based Ad Blocker${NOCOLOR}                         ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${BG_SUCCESS}${WHITE} v${VERSION_NUMBER} ${NOCOLOR}"
     if [ "$OS_TYPE" = "openwrt" ]; then
-        printf " ${YELLOW}[OpenWrt]${NOCOLOR}\n"
+        printf " ${BG_INFO}${WHITE} OpenWrt ${NOCOLOR}"
     else
-        printf " ${YELLOW}[Linux]${NOCOLOR}\n"
+        printf " ${BG_INFO}${WHITE} Linux ${NOCOLOR}"
     fi
+    printf " ${HE_MUTED}by Abi Darwish & MSS${NOCOLOR}                    ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}╰─────────────────────────────────────────────────────────────────╯${NOCOLOR}\n"
+}
+
+# Print section header
+print_section() {
+    title="$1"
+    icon="$2"
+    printf "\n ${HE_BORDER}┌──${NOCOLOR} ${icon} ${HE_HEADER}${title}${NOCOLOR}\n"
+}
+
+# Print section footer
+print_section_end() {
+    printf " ${HE_BORDER}└──────────────────────────────────────────────────${NOCOLOR}\n"
+}
+
+# Print horizontal divider
+print_divider() {
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+}
+
+# Print info row with icon
+print_info_row() {
+    label="$1"
+    value="$2"
+    icon="$3"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${icon} ${HE_MUTED}%-22s${NOCOLOR} ${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$label" "$value"
+}
+
+# Print status badge
+print_badge() {
+    text="$1"
+    type="$2"  # success, error, warning, info
+    case "$type" in
+        success) printf "${BG_SUCCESS}${WHITE} ${text} ${NOCOLOR}" ;;
+        error)   printf "${BG_ERROR}${WHITE} ${text} ${NOCOLOR}" ;;
+        warning) printf "${BG_WARNING}${WHITE} ${text} ${NOCOLOR}" ;;
+        info)    printf "${BG_INFO}${WHITE} ${text} ${NOCOLOR}" ;;
+        *)       printf "${HE_MUTED}[${text}]${NOCOLOR}" ;;
+    esac
 }
 
 # Check if running as root
@@ -123,12 +226,12 @@ get_public_ip() {
     ip -4 addr 2>/dev/null | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | awk '{print $1}' | head -1
 }
 
-# Confirm prompt (returns 0 for yes, 1 for no)
+# Confirm prompt (returns 0 for yes, 1 for no) - Modern style
 confirm() {
     prompt="$1"
     default="${2:-n}"
 
-    printf " %s [y/n]: " "$prompt"
+    printf " ${HE_ACCENT}?${NOCOLOR} ${HE_MUTED}%s${NOCOLOR} [${HE_SUCCESS}y${NOCOLOR}/${RED}n${NOCOLOR}]: " "$prompt"
     read_input; response=$REPLY
 
     case "$response" in
@@ -139,9 +242,9 @@ confirm() {
     esac
 }
 
-# Wait for user input
+# Wait for user input - Modern style
 press_enter() {
-    printf " Press Enter to continue..."
+    printf " ${HE_MUTED}Press${NOCOLOR} ${WHITE}Enter${NOCOLOR} ${HE_MUTED}to continue...${NOCOLOR}"
     read -r _ < /dev/tty
 }
 
@@ -583,9 +686,11 @@ process_blocklist() {
     }'
 }
 
-# Update blocked hostnames from providers
+# Update blocked hostnames from providers - Modern UI
 update_engine() {
-    printf " Updating blocked hostnames...\n"
+    printf "\n"
+    print_section "Updating Blocklists" "📥"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
 
     # Ensure directory exists
     [ ! -d "$DNSMASQ_DIR" ] && mkdir -p "$DNSMASQ_DIR"
@@ -595,12 +700,14 @@ update_engine() {
 
     # Check if providers file exists
     if [ ! -f "$PROVIDERS_FILE" ]; then
-        println_red " Error: providers.txt not found"
+        printf " ${HE_BORDER}│${NOCOLOR}  ${RED}✗${NOCOLOR} Error: providers.txt not found\n"
         return 1
     fi
 
     # Count active providers
     provider_count=0
+    success_count=0
+    fail_count=0
 
     # Process each provider
     while IFS= read -r line || [ -n "$line" ]; do
@@ -616,7 +723,7 @@ update_engine() {
         [ -z "$list_url" ] && continue
 
         provider_count=$((provider_count + 1))
-        printf "   [%d] %s..." "$provider_count" "$provider_name"
+        printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[%2d]${NOCOLOR} ${WHITE}%-25s${NOCOLOR}" "$provider_count" "$provider_name"
 
         # Download to temp file first for proper status check
         tmp_download="/tmp/helium_dl_$$.tmp"
@@ -638,9 +745,11 @@ update_engine() {
         # Check download success AND file has content
         if [ $dl_status -eq 0 ] && [ -s "$tmp_download" ]; then
             cat "$tmp_download" | process_blocklist >> "$TEMP_LIST"
-            printf "${GREEN}ok${NOCOLOR}\n"
+            printf "${HE_SUCCESS}✓${NOCOLOR}\n"
+            success_count=$((success_count + 1))
         else
-            printf "${RED}failed${NOCOLOR}\n"
+            printf "${RED}✗${NOCOLOR}\n"
+            fail_count=$((fail_count + 1))
         fi
         rm -f "$tmp_download"
 
@@ -648,14 +757,15 @@ update_engine() {
 
     # Add blacklisted hosts
     if [ -f "$BLACKLIST_FILE" ] && [ -s "$BLACKLIST_FILE" ]; then
-        printf "   Adding custom blacklist..."
+        printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Adding custom blacklist...${NOCOLOR}"
         while IFS= read -r hostname || [ -n "$hostname" ]; do
             [ -n "$hostname" ] && echo "0.0.0.0 ${hostname}" >> "$TEMP_LIST"
         done < "$BLACKLIST_FILE"
-        printf "${GREEN}ok${NOCOLOR}\n"
+        printf "${HE_SUCCESS}✓${NOCOLOR}\n"
     fi
 
-    printf " Processing and deduplicating..."
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Processing and deduplicating...${NOCOLOR}"
 
     # Build whitelist pattern for awk (if exists)
     whitelist_pattern=""
@@ -689,31 +799,29 @@ update_engine() {
         rm -f "$ADBLOCK_HOSTS.tmp"
     fi
 
-    println_green "done"
+    printf "${HE_SUCCESS}✓${NOCOLOR}\n"
 
     # Whitelist already applied above, show message if it was used
     if [ -n "$whitelist_pattern" ]; then
-        printf " Whitelist applied...${GREEN}done${NOCOLOR}\n"
+        printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Applying whitelist...${NOCOLOR}${HE_SUCCESS}✓${NOCOLOR}\n"
     fi
 
     # Cleanup
     rm -f "$TEMP_LIST"
 
     # Restart dnsmasq to apply changes
-    printf " Restarting dnsmasq..."
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Restarting dnsmasq...${NOCOLOR}"
     restart_dnsmasq
-    println_green "done"
+    printf "${HE_SUCCESS}✓${NOCOLOR}\n"
 
     # Show count
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
     if [ -f "$ADBLOCK_HOSTS" ]; then
         count=$(wc -l < "$ADBLOCK_HOSTS" | tr -d ' ')
-        echo
-        printf " ${GREEN}✓${NOCOLOR} "
-        print_green "$count"
-        printf " hostnames blocked from "
-        print_green "$provider_count"
-        printf " providers\n"
+        printf " ${HE_BORDER}╰──${NOCOLOR} ${HE_SUCCESS}✓${NOCOLOR} "
+        printf "${HE_SUCCESS}%s${NOCOLOR} hostnames blocked from ${HE_ACCENT}%s${NOCOLOR} providers\n" "$count" "$provider_count"
     fi
+    printf "\n"
 }
 
 # Clean dead/invalid hosts from database
@@ -756,50 +864,49 @@ clean_dead_hosts() {
     [ "$deleted" -gt 0 ] && restart_dnsmasq
 }
 
-# Get Helium status information
+# Get Helium status information - Modern UI
 print_helium_status() {
     blocked_count=0
     [ -f "$ADBLOCK_HOSTS" ] && blocked_count=$(wc -l < "$ADBLOCK_HOSTS" 2>/dev/null | tr -d ' ')
 
-    println_white " System Status"
+    print_section "System Status" "📊"
 
     if is_dnsmasq_running && is_helium_active; then
-        printf " %-25s : " "DNSMasq"
-        println_green "running"
+        printf " ${HE_BORDER}│${NOCOLOR}  🟢 ${HE_MUTED}DNSMasq              ${NOCOLOR}"
+        print_badge "RUNNING" "success"
+        printf "\n"
 
         current_dns=$(get_current_dns)
         if [ -n "$current_dns" ]; then
-            printf " %-25s : " "DNS Server"
-            println_green "$current_dns"
+            printf " ${HE_BORDER}│${NOCOLOR}  🌐 ${HE_MUTED}DNS Server           ${NOCOLOR}${HE_ACCENT}%s${NOCOLOR}\n" "$current_dns"
         fi
 
-        printf " %-25s : " "Blocked Hostnames"
-        println_green "$blocked_count"
+        printf " ${HE_BORDER}│${NOCOLOR}  🚫 ${HE_MUTED}Blocked Hostnames    ${NOCOLOR}${HE_SUCCESS}%s${NOCOLOR}\n" "$blocked_count"
 
         # Show uptime on Linux
         if [ "$OS_TYPE" != "openwrt" ]; then
             active_since=$(systemctl status dnsmasq 2>/dev/null | sed -ne 's|^.*active (running).*; \(.*\)$|\1|p')
             if [ -n "$active_since" ]; then
-                printf " %-25s : " "Active Since"
-                println_green "$active_since"
+                printf " ${HE_BORDER}│${NOCOLOR}  ⏱️  ${HE_MUTED}Active Since         ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$active_since"
             fi
         fi
     else
-        printf " %-25s : " "DNSMasq"
-        println_red "stopped"
-        printf " %-25s : " "Blocked Hostnames"
-        println_red "0"
+        printf " ${HE_BORDER}│${NOCOLOR}  🔴 ${HE_MUTED}DNSMasq              ${NOCOLOR}"
+        print_badge "STOPPED" "error"
+        printf "\n"
+        printf " ${HE_BORDER}│${NOCOLOR}  🚫 ${HE_MUTED}Blocked Hostnames    ${NOCOLOR}${RED}0${NOCOLOR}\n"
     fi
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
 }
 
-# Get machine information
+# Get machine information - Modern UI
 print_machine_info() {
-    println_white " Machine Info"
+    print_section "Machine Info" "💻"
 
     # CPU detection (supports x86, ARM32, ARM64, MIPS)
-    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "^model name|^system type|^Hardware|^cpu model" | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
+    cpu_model=$(cat /proc/cpuinfo 2>/dev/null | grep -E "^model name|^system type|^Hardware|^cpu model" | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-35)
     # Fallback 1: try Model field (RPi)
-    [ -z "$cpu_model" ] && cpu_model=$(grep -E "^Model" /proc/cpuinfo 2>/dev/null | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-40)
+    [ -z "$cpu_model" ] && cpu_model=$(grep -E "^Model" /proc/cpuinfo 2>/dev/null | head -1 | cut -d':' -f2 | sed 's/^[ \t]*//' | cut -c1-35)
     # Fallback 2: ARM64 - parse CPU part code
     if [ -z "$cpu_model" ]; then
         cpu_part=$(grep -m1 "^CPU part" /proc/cpuinfo 2>/dev/null | cut -d':' -f2 | tr -d ' ')
@@ -820,34 +927,45 @@ print_machine_info() {
     cpu_cores=$(grep -c "^processor" /proc/cpuinfo 2>/dev/null || echo "1")
 
     if [ "$cpu_cores" = "1" ]; then
-        printf " %-25s : " "CPU (single core)"
+        printf " ${HE_BORDER}│${NOCOLOR}  🖥️  ${HE_MUTED}CPU (1 core)         ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "${cpu_model:-Unknown}"
     else
-        printf " %-25s : " "CPU (${cpu_cores} cores)"
+        printf " ${HE_BORDER}│${NOCOLOR}  🖥️  ${HE_MUTED}CPU (${cpu_cores} cores)        ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "${cpu_model:-Unknown}"
     fi
-    println_green "${cpu_model:-Unknown}"
 
     # OS
     if [ -f /etc/os-release ]; then
-        os_name=$(grep "PRETTY_NAME" /etc/os-release 2>/dev/null | cut -d'"' -f2)
+        os_name=$(grep "PRETTY_NAME" /etc/os-release 2>/dev/null | cut -d'"' -f2 | cut -c1-30)
     else
         os_name=$(uname -s)
     fi
-    printf " %-25s : " "OS Version"
-    println_green "${os_name:-Unknown}"
+    printf " ${HE_BORDER}│${NOCOLOR}  🐧 ${HE_MUTED}OS Version           ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "${os_name:-Unknown}"
 
     # Kernel
-    kernel=$(uname -r)
-    printf " %-25s : " "Kernel Version"
-    println_green "$kernel"
+    kernel=$(uname -r | cut -c1-25)
+    printf " ${HE_BORDER}│${NOCOLOR}  ⚙️  ${HE_MUTED}Kernel               ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$kernel"
 
-    # RAM
+    # RAM with progress bar
     if command_exists free; then
         ram_used=$(free -m 2>/dev/null | grep Mem: | awk '{print $3}')
         ram_total=$(free -m 2>/dev/null | grep Mem: | awk '{print $2}')
         if [ -n "$ram_used" ] && [ -n "$ram_total" ] && [ "$ram_total" -gt 0 ]; then
             ram_percent=$((ram_used * 100 / ram_total))
-            printf " %-25s : " "RAM Usage"
-            println_green "${ram_used}MB / ${ram_total}MB (${ram_percent}%)"
+            # Create mini progress bar
+            bar_width=10
+            filled=$((ram_percent * bar_width / 100))
+            empty=$((bar_width - filled))
+            bar=""
+            i=0; while [ $i -lt $filled ]; do bar="${bar}█"; i=$((i+1)); done
+            while [ $i -lt $bar_width ]; do bar="${bar}░"; i=$((i+1)); done
+
+            if [ "$ram_percent" -gt 80 ]; then
+                ram_color="${RED}"
+            elif [ "$ram_percent" -gt 60 ]; then
+                ram_color="${HE_WARNING}"
+            else
+                ram_color="${HE_SUCCESS}"
+            fi
+            printf " ${HE_BORDER}│${NOCOLOR}  💾 ${HE_MUTED}RAM                  ${NOCOLOR}${ram_color}%s${NOCOLOR} ${HE_MUTED}%s/%sMB${NOCOLOR}\n" "$bar" "$ram_used" "$ram_total"
         fi
     fi
 
@@ -865,14 +983,12 @@ print_machine_info() {
         else
             uptime_str="${uptime_mins}m"
         fi
-        printf " %-25s : " "Uptime"
-        println_green "$uptime_str"
+        printf " ${HE_BORDER}│${NOCOLOR}  ⏰ ${HE_MUTED}Uptime               ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$uptime_str"
     fi
 
     # IP Address
     if [ -n "$PUBLIC_IP" ]; then
-        printf " %-25s : " "IP Address"
-        println_green "$PUBLIC_IP"
+        printf " ${HE_BORDER}│${NOCOLOR}  🔗 ${HE_MUTED}IP Address           ${NOCOLOR}${HE_ACCENT}%s${NOCOLOR}\n" "$PUBLIC_IP"
     fi
 
     # Bandwidth stats (Linux with vnstat only)
@@ -880,14 +996,13 @@ print_machine_info() {
         daily=$(vnstat -d --oneline 2>/dev/null | awk -F';' '{print $6}' | sed 's/ //')
         monthly=$(vnstat -m --oneline 2>/dev/null | awk -F';' '{print $11}' | sed 's/ //')
         if [ -n "$daily" ]; then
-            printf " %-25s : " "Daily Data Usage"
-            println_green "$daily"
+            printf " ${HE_BORDER}│${NOCOLOR}  📊 ${HE_MUTED}Daily Traffic        ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$daily"
         fi
         if [ -n "$monthly" ]; then
-            printf " %-25s : " "Monthly Data Usage"
-            println_green "$monthly"
+            printf " ${HE_BORDER}│${NOCOLOR}  📈 ${HE_MUTED}Monthly Traffic      ${NOCOLOR}${HE_HIGHLIGHT}%s${NOCOLOR}\n" "$monthly"
         fi
     fi
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
 }
 
 # -----------------------------------------------------------------------------
@@ -975,12 +1090,13 @@ EOF
         chmod 755 "$INSTALL_PATH" 2>/dev/null
     fi
 
-    echo
-    println_green " Installation completed!"
-    printf " Type "
-    print_green "helium"
-    printf " to start\n"
-    echo
+    printf "\n"
+    printf " ${HE_ACCENT}╭─────────────────────────────────────────────────╮${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}  ${HE_SUCCESS}✓${NOCOLOR} ${WHITE}Installation completed!${NOCOLOR}                     ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}  Type ${HE_HIGHLIGHT}helium${NOCOLOR} to start                         ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}╰─────────────────────────────────────────────────╯${NOCOLOR}\n"
+    printf "\n"
 }
 
 do_uninstall() {
@@ -1129,12 +1245,13 @@ do_reinstall() {
 
     clear_screen
     print_header
-    echo
-    println_green " Reinstallation completed!"
-    printf " Type "
-    print_green "helium"
-    printf " to start\n"
-    echo
+    printf "\n"
+    printf " ${HE_ACCENT}╭─────────────────────────────────────────────────╮${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}  ${HE_SUCCESS}✓${NOCOLOR} ${WHITE}Reinstallation completed!${NOCOLOR}                   ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}  Type ${HE_HIGHLIGHT}helium${NOCOLOR} to start                         ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}╰─────────────────────────────────────────────────╯${NOCOLOR}\n"
+    printf "\n"
 }
 
 # -----------------------------------------------------------------------------
@@ -1378,6 +1495,7 @@ parse_selection_input() {
     done
 }
 
+# Modern provider list display
 show_providers_list() {
     tmp_file="${PROVIDERS_FILE}.tmp"
     [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
@@ -1402,10 +1520,17 @@ show_providers_list() {
         esac
     done < "$tmp_file"
 
-    printf " ${WHITE}Providers: ${GREEN}%d active${NOCOLOR} / ${RED}%d inactive${NOCOLOR}\n" "$active_count" "$inactive_count"
-    echo " ═══════════════════════════════════════════════════════════════════════"
-    printf " ${WHITE}%-3s %3s  %-18s %-8s %-3s %-26s${NOCOLOR}\n" "ST" "#" "NAME" "CATEGORY" "REG" "DESCRIPTION"
-    echo " ───────────────────────────────────────────────────────────────────────"
+    print_section "Blocklist Providers" "📋"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  📊 ${HE_MUTED}Summary:${NOCOLOR} "
+    print_badge "${active_count} active" "success"
+    printf " "
+    print_badge "${inactive_count} inactive" "error"
+    printf "\n"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_HEADER}%-3s  %3s  %-20s %-10s %-20s${NOCOLOR}\n" "ST" "#" "NAME" "CATEGORY" "DESCRIPTION"
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
 
     # Second pass: display providers with numbers
     while IFS= read -r line || [ -n "$line" ]; do
@@ -1417,21 +1542,22 @@ show_providers_list() {
             *"="*)
                 parse_provider_line "$line"
 
-                disp_name=$(echo "$P_NAME" | cut -c1-18)
-                disp_cat=$(echo "$P_CATEGORY" | cut -c1-8)
-                disp_desc=$(echo "$P_DESC" | cut -c1-26)
+                disp_name=$(echo "$P_NAME" | cut -c1-20)
+                disp_cat=$(echo "$P_CATEGORY" | cut -c1-10)
+                disp_desc=$(echo "$P_DESC" | cut -c1-20)
 
                 if [ "$P_ACTIVE" = "1" ]; then
-                    printf " ${GREEN}[✓]${NOCOLOR} %3d  %-18s %-8s %-3s %-26s\n" "$idx" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
+                    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_SUCCESS}🟢${NOCOLOR} %3d  ${WHITE}%-20s${NOCOLOR} ${HE_MUTED}%-10s${NOCOLOR} ${HE_MUTED}%-20s${NOCOLOR}\n" "$idx" "$disp_name" "$disp_cat" "$disp_desc"
                 else
-                    printf " ${RED}[ ]${NOCOLOR} %3d  ${WHITE}%-18s${NOCOLOR} %-8s %-3s %-26s\n" "$idx" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
+                    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}⚫${NOCOLOR} %3d  ${DIM}%-20s${NOCOLOR} ${HE_MUTED}%-10s${NOCOLOR} ${HE_MUTED}%-20s${NOCOLOR}\n" "$idx" "$disp_name" "$disp_cat" "$disp_desc"
                 fi
                 idx=$((idx + 1))
                 ;;
         esac
     done < "$tmp_file"
 
-    echo " ───────────────────────────────────────────────────────────────────────"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}╰──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
 }
 
 do_activate_provider() {
@@ -1455,9 +1581,10 @@ do_activate_provider() {
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
-        printf " ${YELLOW}[Unsaved changes]${NOCOLOR}\n"
+        printf " ${HE_WARNING}⚠${NOCOLOR}  ${HE_MUTED}Unsaved changes${NOCOLOR}\n"
     fi
-    printf " ${WHITE}Select:${NOCOLOR} 3 | 1,3,5 | 1-5 | ${GREEN}A${NOCOLOR}=all  (${GREEN}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel): "
+    printf "\n ${HE_MUTED}Format:${NOCOLOR} ${WHITE}3${NOCOLOR} ${HE_MUTED}|${NOCOLOR} ${WHITE}1,3,5${NOCOLOR} ${HE_MUTED}|${NOCOLOR} ${WHITE}1-5${NOCOLOR} ${HE_MUTED}|${NOCOLOR} ${HE_SUCCESS}A${NOCOLOR}${HE_MUTED}=all${NOCOLOR}\n"
+    printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Select to activate${NOCOLOR} (${HE_SUCCESS}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel)${HE_MUTED}:${NOCOLOR} "
     read_input; selection=$REPLY
 
     case "$selection" in
@@ -1535,9 +1662,10 @@ do_deactivate_provider() {
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
-        printf " ${YELLOW}[Unsaved changes]${NOCOLOR}\n"
+        printf " ${HE_WARNING}⚠${NOCOLOR}  ${HE_MUTED}Unsaved changes${NOCOLOR}\n"
     fi
-    printf " ${WHITE}Select:${NOCOLOR} 3 | 1,3,5 | 1-5 | ${RED}A${NOCOLOR}=all  (${GREEN}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel): "
+    printf "\n ${HE_MUTED}Format:${NOCOLOR} ${WHITE}3${NOCOLOR} ${HE_MUTED}|${NOCOLOR} ${WHITE}1,3,5${NOCOLOR} ${HE_MUTED}|${NOCOLOR} ${WHITE}1-5${NOCOLOR} ${HE_MUTED}|${NOCOLOR} ${RED}A${NOCOLOR}${HE_MUTED}=all${NOCOLOR}\n"
+    printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Select to deactivate${NOCOLOR} (${HE_SUCCESS}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel)${HE_MUTED}:${NOCOLOR} "
     read_input; selection=$REPLY
 
     case "$selection" in
@@ -1598,14 +1726,13 @@ do_deactivate_provider() {
 # FEATURE: WHITELIST MANAGEMENT
 # -----------------------------------------------------------------------------
 
+# Modern whitelist management
 do_whitelist() {
     clear_screen
     print_header
-    echo
 
     if ! is_helium_active; then
         print_helium_status
-        echo
         press_enter
         return
     fi
@@ -1614,26 +1741,35 @@ do_whitelist() {
     tmp_file="${WHITELIST_FILE}.tmp"
     [ ! -f "$tmp_file" ] && cp "$WHITELIST_FILE" "$tmp_file"
 
-    printf " ${WHITE}%-35s %12s${NOCOLOR}\n" "HOST" "STATUS"
-    echo " ------------------------------------------------"
+    print_section "Whitelist Management" "✨"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Whitelisted domains will NOT be blocked${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_HEADER}%-40s %12s${NOCOLOR}\n" "DOMAIN" "STATUS"
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
 
     if [ ! -s "$tmp_file" ]; then
-        printf " List is empty\n"
+        printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}(empty list)${NOCOLOR}\n"
     else
         while IFS= read -r host || [ -n "$host" ]; do
             [ -z "$host" ] && continue
-            printf " %-35s " "$host"
-            println_green "whitelisted"
+            printf " ${HE_BORDER}│${NOCOLOR}  ${WHITE}%-40s${NOCOLOR} " "$host"
+            print_badge "whitelisted" "success"
+            printf "\n"
         done < "$tmp_file"
     fi
 
-    echo
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}╰──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf "\n"
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$WHITELIST_FILE" >/dev/null 2>&1; then
-        printf " Enter hostname to add/remove (s=save, c=cancel): "
+        printf " ${HE_WARNING}⚠${NOCOLOR}  ${HE_MUTED}Unsaved changes${NOCOLOR}\n"
+        printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter domain to add/remove${NOCOLOR} (${HE_SUCCESS}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel)${HE_MUTED}:${NOCOLOR} "
     else
-        printf " Enter hostname to add/remove (c=cancel): "
+        printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter domain to add/remove${NOCOLOR} (${RED}c${NOCOLOR}=cancel)${HE_MUTED}:${NOCOLOR} "
     fi
     read_input; selection=$REPLY
 
@@ -1659,10 +1795,14 @@ do_whitelist() {
             if grep -q "^${escaped_sel}$" "$tmp_file" 2>/dev/null; then
                 if confirm "Remove ${selection} from whitelist?"; then
                     sed -i "#^${selection}$#d" "$tmp_file"
+                    printf " ${RED}✗${NOCOLOR} Removed ${WHITE}%s${NOCOLOR}\n" "$selection"
+                    sleep 1
                 fi
             else
                 echo "$selection" >> "$tmp_file"
                 sed -i '/^$/d' "$tmp_file"
+                printf " ${HE_SUCCESS}✓${NOCOLOR} Added ${WHITE}%s${NOCOLOR}\n" "$selection"
+                sleep 1
             fi
             do_whitelist
             ;;
@@ -1673,14 +1813,13 @@ do_whitelist() {
 # FEATURE: BLACKLIST MANAGEMENT
 # -----------------------------------------------------------------------------
 
+# Modern blacklist management
 do_blacklist() {
     clear_screen
     print_header
-    echo
 
     if ! is_helium_active; then
         print_helium_status
-        echo
         press_enter
         return
     fi
@@ -1689,26 +1828,35 @@ do_blacklist() {
     tmp_file="${BLACKLIST_FILE}.tmp"
     [ ! -f "$tmp_file" ] && cp "$BLACKLIST_FILE" "$tmp_file"
 
-    printf " ${WHITE}%-35s %12s${NOCOLOR}\n" "HOST" "STATUS"
-    echo " ------------------------------------------------"
+    print_section "Blacklist Management" "⛔"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Blacklisted domains will ALWAYS be blocked${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_HEADER}%-40s %12s${NOCOLOR}\n" "DOMAIN" "STATUS"
+    printf " ${HE_BORDER}├──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
 
     if [ ! -s "$tmp_file" ]; then
-        printf " List is empty\n"
+        printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}(empty list)${NOCOLOR}\n"
     else
         while IFS= read -r host || [ -n "$host" ]; do
             [ -z "$host" ] && continue
-            printf " %-35s " "$host"
-            println_green "blacklisted"
+            printf " ${HE_BORDER}│${NOCOLOR}  ${WHITE}%-40s${NOCOLOR} " "$host"
+            print_badge "blocked" "error"
+            printf "\n"
         done < "$tmp_file"
     fi
 
-    echo
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}╰──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf "\n"
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$BLACKLIST_FILE" >/dev/null 2>&1; then
-        printf " Enter hostname to add/remove (s=save, c=cancel): "
+        printf " ${HE_WARNING}⚠${NOCOLOR}  ${HE_MUTED}Unsaved changes${NOCOLOR}\n"
+        printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter domain to add/remove${NOCOLOR} (${HE_SUCCESS}s${NOCOLOR}=save ${RED}c${NOCOLOR}=cancel)${HE_MUTED}:${NOCOLOR} "
     else
-        printf " Enter hostname to add/remove (c=cancel): "
+        printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter domain to add/remove${NOCOLOR} (${RED}c${NOCOLOR}=cancel)${HE_MUTED}:${NOCOLOR} "
     fi
     read_input; selection=$REPLY
 
@@ -1734,10 +1882,14 @@ do_blacklist() {
             if grep -q "^${escaped_sel}$" "$tmp_file" 2>/dev/null; then
                 if confirm "Remove ${selection} from blacklist?"; then
                     sed -i "#^${selection}$#d" "$tmp_file"
+                    printf " ${HE_SUCCESS}✓${NOCOLOR} Removed ${WHITE}%s${NOCOLOR}\n" "$selection"
+                    sleep 1
                 fi
             else
                 echo "$selection" >> "$tmp_file"
                 sed -i '/^$/d' "$tmp_file"
+                printf " ${RED}⛔${NOCOLOR} Blocked ${WHITE}%s${NOCOLOR}\n" "$selection"
+                sleep 1
             fi
             do_blacklist
             ;;
@@ -1748,24 +1900,26 @@ do_blacklist() {
 # FEATURE: DNS CHANGE
 # -----------------------------------------------------------------------------
 
+# Modern DNS change menu
 do_change_dns() {
     clear_screen
     print_header
-    echo
     print_helium_status
-    echo
 
-    println_white " Change DNS Server"
-    echo " [1] Google (8.8.8.8)"
-    echo " [2] Cloudflare (1.1.1.1)"
-    echo " [3] Cloudflare Family (1.1.1.3)"
-    echo " [4] AdGuard DNS (94.140.14.14)"
-    echo " [5] AdGuard Family (94.140.14.15)"
-    echo " [6] Quad9 (9.9.9.9)"
-    echo " [7] Custom"
-    echo " [8] Back to menu"
-    echo
-    printf " Enter option [1-8]: "
+    print_section "Change DNS Server" "🌐"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[1]${NOCOLOR} 🔷 ${WHITE}Google${NOCOLOR}            ${HE_MUTED}8.8.8.8${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[2]${NOCOLOR} 🟠 ${WHITE}Cloudflare${NOCOLOR}        ${HE_MUTED}1.1.1.1${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[3]${NOCOLOR} 🟠 ${WHITE}Cloudflare Family${NOCOLOR}  ${HE_MUTED}1.1.1.3${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[4]${NOCOLOR} 🟢 ${WHITE}AdGuard DNS${NOCOLOR}       ${HE_MUTED}94.140.14.14${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[5]${NOCOLOR} 🟢 ${WHITE}AdGuard Family${NOCOLOR}    ${HE_MUTED}94.140.14.15${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[6]${NOCOLOR} 🔵 ${WHITE}Quad9${NOCOLOR}             ${HE_MUTED}9.9.9.9${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[7]${NOCOLOR} ⚙️  ${WHITE}Custom${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[8]${NOCOLOR} 🚪 ${WHITE}Back to menu${NOCOLOR}\n"
+    printf " ${HE_BORDER}│${NOCOLOR}\n"
+    printf " ${HE_BORDER}╰──────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf "\n"
+    printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter option${NOCOLOR} ${WHITE}[1-8]${NOCOLOR}${HE_MUTED}:${NOCOLOR} "
     read_input; option=$REPLY
 
     case "$option" in
@@ -1776,12 +1930,12 @@ do_change_dns() {
         5) new_dns="94.140.14.15"; provider="AdGuard Family" ;;
         6) new_dns="9.9.9.9"; provider="Quad9" ;;
         7)
-            printf " Enter DNS IP address: "
+            printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter DNS IP address:${NOCOLOR} "
             read_input; new_dns=$REPLY
             [ -z "$new_dns" ] && do_change_dns && return
             # Validate IP format
             if ! is_valid_ipv4 "$new_dns"; then
-                println_red " Invalid IP address format"
+                printf " ${RED}✗${NOCOLOR} Invalid IP address format\n"
                 sleep 1
                 do_change_dns
                 return
@@ -1792,13 +1946,12 @@ do_change_dns() {
         *) do_change_dns; return ;;
     esac
 
-    printf " Changing to %s DNS..." "$provider"
+    printf " ${HE_MUTED}Changing to %s DNS...${NOCOLOR}" "$provider"
     set_dns_server "$new_dns"
     restart_dnsmasq
     sleep 2
-    println_green "done"
-    printf " DNS server changed to "
-    println_green "$new_dns"
+    printf "${HE_SUCCESS}done${NOCOLOR}\n"
+    printf " ${HE_SUCCESS}✓${NOCOLOR} DNS server changed to ${HE_ACCENT}%s${NOCOLOR}\n" "$new_dns"
     echo
     press_enter
     do_change_dns
@@ -1985,40 +2138,74 @@ do_upgrade_script() {
 # MAIN MENU
 # -----------------------------------------------------------------------------
 
+# =============================================================================
+# MODERN MAIN MENU
+# =============================================================================
+
+# Print a menu item with icon
+print_menu_item() {
+    num="$1"
+    icon="$2"
+    label="$3"
+    printf " ${HE_BORDER}│${NOCOLOR}  ${HE_ACCENT}[%2s]${NOCOLOR} %s ${WHITE}%-18s${NOCOLOR}" "$num" "$icon" "$label"
+}
+
 main_menu() {
     while true; do
         clear_screen
         print_header
-        echo
         print_helium_status
-        echo
         print_machine_info
-        echo
 
-        println_white " Manage Helium"
+        print_section "Quick Actions" "⚡"
 
         if [ "$OS_TYPE" = "openwrt" ]; then
-            # OpenWrt menu (11 options)
-            echo " [1] Start Helium         [7] Blacklist host"
-            echo " [2] Stop Helium          [8] Toggle IPv6"
-            echo " [3] Update database      [9] Update Helium"
-            echo " [4] Activate provider   [10] Uninstall"
-            echo " [5] Deactivate provider [11] Exit"
-            echo " [6] Whitelist host"
+            # OpenWrt menu (11 options) - Two column layout
+            print_menu_item "1" "▶️ " "Start Helium"
+            print_menu_item "7" "⛔" "Blacklist Host"
+            printf "\n"
+            print_menu_item "2" "⏹️ " "Stop Helium"
+            print_menu_item "8" "🔄" "Toggle IPv6"
+            printf "\n"
+            print_menu_item "3" "📥" "Update Database"
+            print_menu_item "9" "⬆️ " "Update Helium"
+            printf "\n"
+            print_menu_item "4" "✅" "Activate Provider"
+            print_menu_item "10" "🗑️ " "Uninstall"
+            printf "\n"
+            print_menu_item "5" "❌" "Deactivate Provider"
+            print_menu_item "11" "🚪" "Exit"
+            printf "\n"
+            print_menu_item "6" "✨" "Whitelist Host"
+            printf "\n"
         else
-            # Linux server menu (12 options)
-            echo " [1] Start Helium         [7] Blacklist host"
-            echo " [2] Stop Helium          [8] Change DNS"
-            echo " [3] Update database      [9] Clean database"
-            echo " [4] Activate provider   [10] Update Helium"
-            echo " [5] Deactivate provider [11] Uninstall"
-            echo " [6] Whitelist host      [12] Exit"
+            # Linux server menu (12 options) - Two column layout
+            print_menu_item "1" "▶️ " "Start Helium"
+            print_menu_item "7" "⛔" "Blacklist Host"
+            printf "\n"
+            print_menu_item "2" "⏹️ " "Stop Helium"
+            print_menu_item "8" "🌐" "Change DNS"
+            printf "\n"
+            print_menu_item "3" "📥" "Update Database"
+            print_menu_item "9" "🧹" "Clean Database"
+            printf "\n"
+            print_menu_item "4" "✅" "Activate Provider"
+            print_menu_item "10" "⬆️ " "Update Helium"
+            printf "\n"
+            print_menu_item "5" "❌" "Deactivate Provider"
+            print_menu_item "11" "🗑️ " "Uninstall"
+            printf "\n"
+            print_menu_item "6" "✨" "Whitelist Host"
+            print_menu_item "12" "🚪" "Exit"
+            printf "\n"
         fi
 
-        echo
+        printf " ${HE_BORDER}│${NOCOLOR}\n"
+        printf " ${HE_BORDER}╰────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+        printf "\n"
 
         if [ "$OS_TYPE" = "openwrt" ]; then
-            printf " Enter option [1-11]: "
+            printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter option${NOCOLOR} ${WHITE}[1-11]${NOCOLOR}${HE_MUTED}:${NOCOLOR} "
             read_input; menu_option=$REPLY
 
             case "$menu_option" in
@@ -2041,7 +2228,7 @@ main_menu() {
                 *) ;;
             esac
         else
-            printf " Enter option [1-12]: "
+            printf " ${HE_ACCENT}❯${NOCOLOR} ${HE_MUTED}Enter option${NOCOLOR} ${WHITE}[1-12]${NOCOLOR}${HE_MUTED}:${NOCOLOR} "
             read_input; menu_option=$REPLY
 
             case "$menu_option" in
