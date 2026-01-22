@@ -90,15 +90,23 @@ check_existing() {
     fi
 }
 
-# Download file
+# Download file (handles OpenWrt's busybox wget)
 download_file() {
     url="$1"
     dest="$2"
 
-    if command -v wget >/dev/null 2>&1; then
-        wget -q -O "$dest" "$url"
-    elif command -v curl >/dev/null 2>&1; then
+    if command -v curl >/dev/null 2>&1; then
+        # Prefer curl (more reliable)
         curl -sL -o "$dest" "$url"
+    elif command -v wget >/dev/null 2>&1; then
+        # Check if full wget or busybox wget
+        if wget --help 2>&1 | grep -q "BusyBox"; then
+            # BusyBox wget - use --no-check-certificate for HTTPS
+            wget --no-check-certificate -q -O "$dest" "$url"
+        else
+            # Full wget
+            wget -q -O "$dest" "$url"
+        fi
     else
         echo " $(print_red "Error"): wget or curl required"
         exit 1

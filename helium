@@ -94,7 +94,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Safe file download with retry
+# Safe file download with retry (handles OpenWrt busybox wget)
 download_file() {
     url="$1"
     output="$2"
@@ -102,10 +102,15 @@ download_file() {
     retry=0
 
     while [ $retry -lt $max_retries ]; do
-        if command_exists wget; then
-            wget -q -O "$output" "$url" 2>/dev/null && return 0
-        elif command_exists curl; then
+        if command_exists curl; then
             curl -sL -o "$output" "$url" 2>/dev/null && return 0
+        elif command_exists wget; then
+            # BusyBox wget needs --no-check-certificate for HTTPS
+            if wget --help 2>&1 | grep -q "BusyBox"; then
+                wget --no-check-certificate -q -O "$output" "$url" 2>/dev/null && return 0
+            else
+                wget -q -O "$output" "$url" 2>/dev/null && return 0
+            fi
         fi
         retry=$((retry + 1))
         sleep 1
@@ -675,7 +680,12 @@ update_engine() {
             curl -sL --connect-timeout 10 "$list_url" -o "$tmp_download" 2>/dev/null
             dl_status=$?
         elif command_exists wget; then
-            wget -q --timeout=10 "$list_url" -O "$tmp_download" 2>/dev/null
+            # BusyBox wget needs --no-check-certificate for HTTPS
+            if wget --help 2>&1 | grep -q "BusyBox"; then
+                wget --no-check-certificate -q --timeout=10 "$list_url" -O "$tmp_download" 2>/dev/null
+            else
+                wget -q --timeout=10 "$list_url" -O "$tmp_download" 2>/dev/null
+            fi
             dl_status=$?
         fi
 
