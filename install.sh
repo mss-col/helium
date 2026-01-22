@@ -134,14 +134,18 @@ do_fresh_install() {
         sed -i '/helium/d' /etc/crontab 2>/dev/null || true
     fi
 
-    # Remove old dnsmasq config
-    echo " [4/6] Cleaning dnsmasq config..."
+    # Remove helium's dnsmasq config (preserve other settings)
+    echo " [4/6] Cleaning helium config..."
     if [ "$OS_TYPE" = "openwrt" ]; then
-        sed -i '/addn-hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        # Only remove helium's addn-hosts entry
+        sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        sed -i '#addn-hosts=/etc/dnsmasq/adblock#d' /etc/dnsmasq.conf 2>/dev/null || true
         uci -q delete dhcp.@dnsmasq[0].addnhosts 2>/dev/null || true
         uci commit dhcp 2>/dev/null || true
     else
-        sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf 2>/dev/null || true
+        # Only remove helium's addn-hosts entry
+        sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        sed -i '#addn-hosts=/etc/dnsmasq/adblock#d' /etc/dnsmasq.conf 2>/dev/null || true
     fi
 
     # Download new script

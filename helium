@@ -344,17 +344,18 @@ install_packages() {
 
 # -----------------------------------------------------------------------------
 # DNSMASQ CONFIGURATION (OS-specific)
+# Safe config - preserves existing settings, only adds addn-hosts
 # -----------------------------------------------------------------------------
 
-# Configure dnsmasq to use adblock hosts
+# Configure dnsmasq to use adblock hosts (preserves existing config)
 configure_dnsmasq_adblock() {
     case "$OS_TYPE" in
         openwrt)
-            # Remove old config if exists
-            sed -i '/addn-hosts/d' /etc/dnsmasq.conf 2>/dev/null
-
             # Check if QWRT (uses dnsmasq.conf directly)
             if grep -q "QWRT" /etc/openwrt_release 2>/dev/null; then
+                # Remove only helium's addn-hosts line (preserve others)
+                sed -i "#addn-hosts=${ADBLOCK_HOSTS}#d" /etc/dnsmasq.conf 2>/dev/null
+                # Add helium addn-hosts
                 echo "addn-hosts=${ADBLOCK_HOSTS}" >> /etc/dnsmasq.conf
             else
                 # Standard OpenWrt uses UCI
@@ -364,26 +365,35 @@ configure_dnsmasq_adblock() {
             fi
             ;;
         *)
-            # Linux: Check if using custom dnsmasq.conf
+            # Linux: Only modify addn-hosts line, preserve everything else
             if [ -f /etc/dnsmasq.conf ]; then
-                # Remove old entry and add new
-                sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf
+                # Remove only helium's addn-hosts entry
+                sed -i "#addn-hosts=${ADBLOCK_HOSTS}#d" /etc/dnsmasq.conf
+                sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf
+                # Add helium addn-hosts
                 echo "addn-hosts=${ADBLOCK_HOSTS}" >> /etc/dnsmasq.conf
+            else
+                # Create minimal config with only addn-hosts
+                echo "addn-hosts=${ADBLOCK_HOSTS}" > /etc/dnsmasq.conf
             fi
             ;;
     esac
 }
 
-# Remove dnsmasq adblock configuration
+# Remove dnsmasq adblock configuration (only removes helium's entry)
 remove_dnsmasq_adblock() {
     case "$OS_TYPE" in
         openwrt)
-            sed -i 's/^addn-hosts/#addn-hosts/' /etc/dnsmasq.conf 2>/dev/null
+            # Only remove helium's addn-hosts, preserve others
+            sed -i "#addn-hosts=${ADBLOCK_HOSTS}#d" /etc/dnsmasq.conf 2>/dev/null
+            sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf 2>/dev/null
             uci -q delete dhcp.@dnsmasq[0].addnhosts
             uci commit dhcp 2>/dev/null
             ;;
         *)
-            sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf 2>/dev/null
+            # Only remove helium's addn-hosts entry
+            sed -i "#addn-hosts=${ADBLOCK_HOSTS}#d" /etc/dnsmasq.conf 2>/dev/null
+            sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf 2>/dev/null
             ;;
     esac
 }
@@ -902,21 +912,8 @@ HaGeZi_Pro="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.t
 EOF
     fi
 
-    # Download dnsmasq.conf template (Linux only)
-    if [ "$OS_TYPE" != "openwrt" ]; then
-        if [ ! -f /etc/dnsmasq.conf ] || ! grep -q "addn-hosts" /etc/dnsmasq.conf; then
-            printf " Downloading dnsmasq configuration..."
-            [ -f /etc/dnsmasq.conf ] && mv /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
-            if download_file "$REMOTE_DNSMASQ_CONF" "/etc/dnsmasq.conf"; then
-                # Replace placeholder IP
-                sed -i "s/YourPublicIP/${PUBLIC_IP}/" /etc/dnsmasq.conf 2>/dev/null
-                println_green "done"
-            else
-                println_yellow "skipped"
-                [ -f /etc/dnsmasq.conf.bak ] && mv /etc/dnsmasq.conf.bak /etc/dnsmasq.conf
-            fi
-        fi
-    fi
+    # Note: We no longer replace dnsmasq.conf to preserve user settings
+    # Only the addn-hosts line will be added by configure_dnsmasq_adblock()
 
     # Create empty whitelist/blacklist files
     [ ! -f "$WHITELIST_FILE" ] && touch "$WHITELIST_FILE"
@@ -1024,14 +1021,17 @@ do_force_uninstall() {
     echo "       done"
 
     echo " [2/7] Removing adblock configuration..."
+    # Only remove helium's addn-hosts entry, preserve other settings
     # OpenWrt
     if [ "$os" = "openwrt" ]; then
-        sed -i '/addn-hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        sed -i '#addn-hosts=/etc/dnsmasq/adblock#d' /etc/dnsmasq.conf 2>/dev/null || true
         uci -q delete dhcp.@dnsmasq[0].addnhosts 2>/dev/null || true
         uci commit dhcp 2>/dev/null || true
     else
-        # Linux
-        sed -i '/addn-hosts.*adblock/d' /etc/dnsmasq.conf 2>/dev/null || true
+        # Linux - only remove helium's addn-hosts entry
+        sed -i '/addn-hosts.*adblock\.hosts/d' /etc/dnsmasq.conf 2>/dev/null || true
+        sed -i '#addn-hosts=/etc/dnsmasq/adblock#d' /etc/dnsmasq.conf 2>/dev/null || true
     fi
     echo "       done"
 
