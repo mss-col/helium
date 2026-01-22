@@ -140,6 +140,31 @@ press_enter() {
     read -r _
 }
 
+# Validate IPv4 address format
+is_valid_ipv4() {
+    ip="$1"
+    # Check format: N.N.N.N where N is 0-255
+    case "$ip" in
+        *[!0-9.]*)
+            return 1 ;;
+    esac
+
+    # Split and validate each octet
+    IFS='.' read -r o1 o2 o3 o4 <<EOF
+$ip
+EOF
+
+    # Must have exactly 4 octets
+    [ -z "$o1" ] || [ -z "$o2" ] || [ -z "$o3" ] || [ -z "$o4" ] && return 1
+
+    # Each octet must be 0-255
+    for octet in $o1 $o2 $o3 $o4; do
+        [ "$octet" -ge 0 ] 2>/dev/null && [ "$octet" -le 255 ] || return 1
+    done
+
+    return 0
+}
+
 # -----------------------------------------------------------------------------
 # ENVIRONMENT DETECTION
 # -----------------------------------------------------------------------------
@@ -250,7 +275,9 @@ restart_dnsmasq() {
 is_dnsmasq_running() {
     case "$OS_TYPE" in
         openwrt)
-            [ "$(/etc/init.d/dnsmasq status 2>/dev/null)" = "running" ]
+            # Use pgrep for reliable detection across OpenWrt variants
+            pgrep -x dnsmasq >/dev/null 2>&1 || \
+            pidof dnsmasq >/dev/null 2>&1
             ;;
         *)
             systemctl is-active dnsmasq >/dev/null 2>&1
@@ -543,7 +570,9 @@ process_blocklist() {
         esac
 
         # Skip if domain is too short (less than 4 chars like a.co)
-        if [ ${#domain} -lt 4 ]; then
+        # Using wc -c for POSIX/busybox compatibility instead of ${#var}
+        domain_len=$(printf '%s' "$domain" | wc -c | tr -d ' ')
+        if [ "$domain_len" -lt 4 ]; then
             continue
         fi
 
@@ -599,19 +628,26 @@ update_engine() {
         provider_count=$((provider_count + 1))
         printf "   [%d] %s..." "$provider_count" "$provider_name"
 
-        # Download and process the list
-        if command_exists curl; then
-            curl -sL --connect-timeout 10 "$list_url" 2>/dev/null
-        elif command_exists wget; then
-            wget -qO- --timeout=10 "$list_url" 2>/dev/null
-        fi | process_blocklist >> "$TEMP_LIST"
+        # Download to temp file first for proper status check
+        tmp_download="/tmp/helium_dl_$$.tmp"
+        dl_status=1
 
-        # Show status
-        if [ $? -eq 0 ]; then
+        if command_exists curl; then
+            curl -sL --connect-timeout 10 "$list_url" -o "$tmp_download" 2>/dev/null
+            dl_status=$?
+        elif command_exists wget; then
+            wget -q --timeout=10 "$list_url" -O "$tmp_download" 2>/dev/null
+            dl_status=$?
+        fi
+
+        # Check download success AND file has content
+        if [ $dl_status -eq 0 ] && [ -s "$tmp_download" ]; then
+            cat "$tmp_download" | process_blocklist >> "$TEMP_LIST"
             printf "${GREEN}ok${NOCOLOR}\n"
         else
             printf "${RED}failed${NOCOLOR}\n"
         fi
+        rm -f "$tmp_download"
 
     done < "$PROVIDERS_FILE"
 
@@ -641,11 +677,11 @@ update_engine() {
 
     println_green "done"
 
-    # Apply whitelist
+    # Apply whitelist (using # as sed delimiter to avoid conflicts with hostnames)
     if [ -f "$WHITELIST_FILE" ] && [ -s "$WHITELIST_FILE" ]; then
         printf " Applying whitelist..."
         while IFS= read -r hostname || [ -n "$hostname" ]; do
-            [ -n "$hostname" ] && sed -i "/${hostname}/d" "$ADBLOCK_HOSTS"
+            [ -n "$hostname" ] && sed -i "#${hostname}#d" "$ADBLOCK_HOSTS"
         done < "$WHITELIST_FILE"
         println_green "done"
     fi
@@ -689,11 +725,11 @@ clean_dead_hosts() {
 
     sleep 1
 
-    # Remove dead hosts
+    # Remove dead hosts (using # as sed delimiter to avoid conflicts)
     while IFS= read -r dead_host || [ -n "$dead_host" ]; do
         [ -z "$dead_host" ] && continue
-        sed -i "/^0\.0\.0\.0 ${dead_host}$/d" "$ADBLOCK_HOSTS" 2>/dev/null
-        sed -i "/^::1 ${dead_host}$/d" "$ADBLOCK_HOSTS" 2>/dev/null
+        sed -i "#^0\.0\.0\.0 ${dead_host}$#d" "$ADBLOCK_HOSTS" 2>/dev/null
+        sed -i "#^::1 ${dead_host}$#d" "$ADBLOCK_HOSTS" 2>/dev/null
         printf "\n ${dead_host}\t"
         print_red "deleted"
     done < "$DEAD_HOSTS"
@@ -886,18 +922,26 @@ EOF
     [ ! -f "$WHITELIST_FILE" ] && touch "$WHITELIST_FILE"
     [ ! -f "$BLACKLIST_FILE" ] && touch "$BLACKLIST_FILE"
 
-    # Setup cron job (Linux only)
-    if [ "$OS_TYPE" != "openwrt" ]; then
-        printf " Setting up daily update..."
-        # Download daily script
+    # Setup cron job for daily updates
+    printf " Setting up daily update..."
+    if [ "$OS_TYPE" = "openwrt" ]; then
+        # OpenWrt uses /etc/crontabs/root
+        cron_file="/etc/crontabs/root"
+        [ ! -f "$cron_file" ] && touch "$cron_file"
+        sed -i '#helium#d' "$cron_file" 2>/dev/null
+        echo "0 4 * * * ${INSTALL_PATH} --update >/dev/null 2>&1 # Helium daily update" >> "$cron_file"
+        # Restart cron service
+        /etc/init.d/cron restart >/dev/null 2>&1 || true
+    else
+        # Linux: Download daily script
         download_file "${REMOTE_BASE}/helium_daily.sh" "/usr/local/sbin/helium_daily" 2>/dev/null
         chmod 755 /usr/local/sbin/helium_daily 2>/dev/null
 
         # Add cron entry
         sed -i '/helium_daily/d' /etc/crontab 2>/dev/null
         echo "0 4 * * * root /usr/local/sbin/helium_daily # Helium" >> /etc/crontab 2>/dev/null
-        println_green "done"
     fi
+    println_green "done"
 
     # Update blocklist
     update_engine
@@ -936,8 +980,11 @@ do_uninstall() {
     rm -rf "$DNSMASQ_DIR"
     rm -f "$INSTALL_PATH"
 
-    # Remove cron job (Linux only)
-    if [ "$OS_TYPE" != "openwrt" ]; then
+    # Remove cron job
+    if [ "$OS_TYPE" = "openwrt" ]; then
+        sed -i '#helium#d' /etc/crontabs/root 2>/dev/null
+        /etc/init.d/cron restart >/dev/null 2>&1 || true
+    else
         sed -i '/helium/d' /etc/crontab 2>/dev/null
         rm -f /usr/local/sbin/helium_daily
     fi
@@ -1501,10 +1548,11 @@ do_whitelist() {
             return
             ;;
         *)
-            # Check if already in list
-            if grep -q "^${selection}$" "$tmp_file" 2>/dev/null; then
+            # Check if already in list (escape special regex chars for grep)
+            escaped_sel=$(printf '%s' "$selection" | sed 's/[.[\*^$]/\\&/g')
+            if grep -q "^${escaped_sel}$" "$tmp_file" 2>/dev/null; then
                 if confirm "Remove ${selection} from whitelist?"; then
-                    sed -i "/^${selection}$/d" "$tmp_file"
+                    sed -i "#^${selection}$#d" "$tmp_file"
                 fi
             else
                 echo "$selection" >> "$tmp_file"
@@ -1575,10 +1623,11 @@ do_blacklist() {
             return
             ;;
         *)
-            # Check if already in list
-            if grep -q "^${selection}$" "$tmp_file" 2>/dev/null; then
+            # Check if already in list (escape special regex chars for grep)
+            escaped_sel=$(printf '%s' "$selection" | sed 's/[.[\*^$]/\\&/g')
+            if grep -q "^${escaped_sel}$" "$tmp_file" 2>/dev/null; then
                 if confirm "Remove ${selection} from blacklist?"; then
-                    sed -i "/^${selection}$/d" "$tmp_file"
+                    sed -i "#^${selection}$#d" "$tmp_file"
                 fi
             else
                 echo "$selection" >> "$tmp_file"
@@ -1624,6 +1673,13 @@ do_change_dns() {
             printf " Enter DNS IP address: "
             read -r new_dns
             [ -z "$new_dns" ] && do_change_dns && return
+            # Validate IP format
+            if ! is_valid_ipv4 "$new_dns"; then
+                println_red " Invalid IP address format"
+                sleep 1
+                do_change_dns
+                return
+            fi
             provider="Custom"
             ;;
         8|"") return ;;
@@ -1771,6 +1827,54 @@ do_update_helium() {
     exit 0
 }
 
+# CLI upgrade script (non-interactive for scripting)
+do_upgrade_script() {
+    printf " Checking for updates..."
+
+    tmp_script="/tmp/helium.tmp"
+    if ! download_file "$REMOTE_SCRIPT" "$tmp_script"; then
+        println_red "failed"
+        printf " Could not download from repository\n"
+        exit 1
+    fi
+
+    latest_version=$(grep "^VERSION_NUMBER=" "$tmp_script" 2>/dev/null | cut -d'"' -f2 | head -1)
+    current_version="$VERSION_NUMBER"
+
+    if [ "$current_version" = "$latest_version" ]; then
+        println_green "up to date"
+        printf " Current version: v%s\n" "$current_version"
+        rm -f "$tmp_script"
+        exit 0
+    fi
+
+    println_yellow "update available"
+    printf " Current: v%s → New: v%s\n" "$current_version" "$latest_version"
+
+    # Apply update
+    printf " Upgrading Helium..."
+    mv "$tmp_script" "$INSTALL_PATH"
+    chmod 755 "$INSTALL_PATH"
+    println_green "done"
+
+    # Update blocklist with new script
+    printf " Updating blocklist..."
+    if is_helium_active; then
+        # Run update with new script
+        "$INSTALL_PATH" --update >/dev/null 2>&1
+        println_green "done"
+    else
+        println_yellow "skipped (not active)"
+    fi
+
+    echo
+    printf " Upgraded to "
+    println_green "v${latest_version}"
+    printf " Run "
+    print_green "helium"
+    printf " to start\n"
+}
+
 # -----------------------------------------------------------------------------
 # MAIN MENU
 # -----------------------------------------------------------------------------
@@ -1871,6 +1975,49 @@ main() {
 
     # Check virtualization (Linux only)
     check_virtualization
+
+    # Handle command line arguments (for cron and scripting)
+    case "$1" in
+        --update|-u)
+            # Update blocklist database
+            if is_helium_active; then
+                update_engine
+            else
+                println_red " Helium is not active"
+                exit 1
+            fi
+            exit 0
+            ;;
+        --upgrade|-U)
+            # Update script from remote repository
+            do_upgrade_script
+            exit 0
+            ;;
+        --status|-s)
+            # Show status and exit
+            print_helium_status
+            exit 0
+            ;;
+        --version|-v)
+            # Show version
+            echo "Helium v${VERSION_NUMBER} (${VERSION_SUFFIX})"
+            exit 0
+            ;;
+        --help|-h)
+            echo "Helium v${VERSION_NUMBER} - DNS-based Ad Blocker"
+            echo "Usage: helium [OPTION]"
+            echo ""
+            echo "Options:"
+            echo "  --update, -u     Update blocklist database"
+            echo "  --upgrade, -U    Update Helium script from repository"
+            echo "  --status, -s     Show current status"
+            echo "  --version, -v    Show version"
+            echo "  --help, -h       Show this help"
+            echo ""
+            echo "Run without arguments for interactive menu."
+            exit 0
+            ;;
+    esac
 
     # Check if Helium is installed
     if is_dnsmasq_running && is_helium_active; then

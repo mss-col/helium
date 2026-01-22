@@ -9,10 +9,14 @@
 ## What's New in v4.0.0
 
 - **Universal Script** - Single script works on Linux (Debian/Ubuntu/RHEL) and OpenWrt
-- **POSIX Compliant** - Pure `/bin/sh` compatibility, no bash required
+- **POSIX Compliant** - Pure `/bin/sh` compatibility, works on busybox (no bash required)
 - **Auto OS Detection** - Automatically detects and adapts to your environment
-- **Enhanced Features** - Whitelist, Blacklist, Provider management, DNS switching
-- **Robust Error Handling** - Better reliability with fallback mechanisms
+- **Multi-Format Parser** - Supports hosts, AdBlock, wildcard, and domain-only formats
+- **Smart Deduplication** - Removes duplicate entries before saving
+- **CLI Arguments** - Scriptable commands for automation and cron jobs
+- **IP Validation** - Validates custom DNS input
+- **Robust Downloads** - Proper status checking with retry mechanism
+- **Cross-Platform Cron** - Auto daily updates for both Linux and OpenWrt
 
 ## Quick Install
 
@@ -54,7 +58,89 @@ helium
 | Change DNS Server | ✓ | - |
 | Clean Dead Hosts | ✓ | - |
 | Toggle IPv6 | - | ✓ |
-| Auto Daily Update | ✓ | - |
+| Auto Daily Update | ✓ | ✓ |
+
+## CLI Commands
+
+Helium supports command-line arguments for scripting and automation:
+
+```bash
+helium                 # Interactive menu
+helium --update, -u    # Update blocklist database
+helium --upgrade, -U   # Update Helium script from repository
+helium --status, -s    # Show current status
+helium --version, -v   # Show version
+helium --help, -h      # Show help
+```
+
+### Examples
+
+```bash
+# Update blocklist silently (for cron)
+helium --update
+
+# Upgrade to latest version
+helium --upgrade
+
+# Check if Helium is running
+helium --status
+```
+
+## Manual Cron Setup
+
+If you prefer to set up cron manually, use these commands:
+
+### Linux (Debian/Ubuntu/RHEL)
+
+```bash
+# Edit crontab
+sudo crontab -e
+
+# Add this line for daily update at 4 AM
+0 4 * * * /usr/local/sbin/helium --update >/dev/null 2>&1
+
+# Or use /etc/crontab
+echo "0 4 * * * root /usr/local/sbin/helium --update >/dev/null 2>&1" | sudo tee -a /etc/crontab
+```
+
+### OpenWrt
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line for daily update at 4 AM
+0 4 * * * /usr/sbin/helium --update >/dev/null 2>&1
+
+# Or directly append to cron file
+echo "0 4 * * * /usr/sbin/helium --update >/dev/null 2>&1" >> /etc/crontabs/root
+
+# Restart cron service
+/etc/init.d/cron restart
+```
+
+### macOS (if adapted)
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line
+0 4 * * * /usr/local/bin/helium --update >/dev/null 2>&1
+```
+
+### Weekly Script Upgrade (Optional)
+
+To automatically upgrade Helium script weekly:
+
+```bash
+# Linux
+echo "0 5 * * 0 root /usr/local/sbin/helium --upgrade >/dev/null 2>&1" | sudo tee -a /etc/crontab
+
+# OpenWrt
+echo "0 5 * * 0 /usr/sbin/helium --upgrade >/dev/null 2>&1" >> /etc/crontabs/root
+/etc/init.d/cron restart
+```
 
 ## Screenshots
 
@@ -95,13 +181,6 @@ Helium uses curated blocklists from trusted sources:
 - **1Hosts** - Aggressive ad blocking
 - And 40+ more regional & specialized lists
 
-## Commands
-
-After installation, run:
-```bash
-helium
-```
-
 ## Uninstall
 
 From the Helium menu, select **Uninstall** option.
@@ -111,10 +190,13 @@ Or manually:
 # Linux
 rm -f /usr/local/sbin/helium /usr/local/sbin/helium_daily
 rm -rf /etc/dnsmasq
+sed -i '/helium/d' /etc/crontab
 
 # OpenWrt
 rm -f /usr/sbin/helium
 rm -rf /etc/dnsmasq
+sed -i '/helium/d' /etc/crontabs/root
+/etc/init.d/cron restart
 ```
 
 ## Credits

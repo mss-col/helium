@@ -16,6 +16,7 @@
             --accent: #58a6ff;
             --accent-hover: #79b8ff;
             --success: #3fb950;
+            --warning: #d29922;
             --border: #30363d;
         }
 
@@ -103,6 +104,12 @@
             color: var(--text-primary);
         }
 
+        h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
         .install-section {
             background: var(--bg-secondary);
             border-radius: 12px;
@@ -114,6 +121,7 @@
             display: flex;
             gap: 1rem;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
@@ -145,6 +153,7 @@
             padding: 1rem;
             overflow-x: auto;
             position: relative;
+            margin-bottom: 1rem;
         }
 
         .code-block code {
@@ -153,6 +162,14 @@
             color: var(--success);
             white-space: pre-wrap;
             word-break: break-all;
+        }
+
+        .code-block.small code {
+            font-size: 0.8rem;
+        }
+
+        .code-block .comment {
+            color: var(--text-secondary);
         }
 
         .copy-btn {
@@ -198,6 +215,27 @@
         .feature-card:hover {
             border-color: var(--accent);
             transform: translateY(-2px);
+        }
+
+        .feature-card.new {
+            border-color: var(--success);
+        }
+
+        .feature-card.new::before {
+            content: 'NEW';
+            position: absolute;
+            top: -8px;
+            right: 10px;
+            background: var(--success);
+            color: var(--bg-primary);
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .feature-card {
+            position: relative;
         }
 
         .feature-icon {
@@ -246,6 +284,31 @@
             color: var(--text-secondary);
         }
 
+        .cli-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .cli-table th,
+        .cli-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cli-table th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .cli-table td:first-child {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            color: var(--success);
+            white-space: nowrap;
+        }
+
         .btn-group {
             display: flex;
             gap: 1rem;
@@ -285,6 +348,30 @@
             color: var(--bg-primary);
         }
 
+        .cron-section {
+            margin-top: 1.5rem;
+        }
+
+        .cron-platform {
+            margin-bottom: 1.5rem;
+        }
+
+        .cron-platform h4 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         footer {
             text-align: center;
             padding: 2rem 0;
@@ -322,6 +409,10 @@
                 width: 100%;
                 text-align: center;
             }
+
+            .cli-table td:first-child {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -340,7 +431,7 @@
         </header>
 
         <section class="install-section">
-            <h2>⚡ Quick Install</h2>
+            <h2>Quick Install</h2>
 
             <div class="install-tabs">
                 <button class="tab-btn active" onclick="showTab('linux')">Linux Server</button>
@@ -374,7 +465,125 @@
         </section>
 
         <section>
-            <h2>✨ Features</h2>
+            <h2>What's New in v4.0.0</h2>
+            <div class="features-grid">
+                <div class="feature-card new">
+                    <div class="feature-icon">🖥️</div>
+                    <h3>CLI Commands</h3>
+                    <p>Scriptable arguments for automation: --update, --upgrade, --status</p>
+                </div>
+                <div class="feature-card new">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Cross-Platform Cron</h3>
+                    <p>Auto daily updates now works on both Linux and OpenWrt</p>
+                </div>
+                <div class="feature-card new">
+                    <div class="feature-icon">📋</div>
+                    <h3>Multi-Format Parser</h3>
+                    <p>Supports hosts, AdBlock, wildcard, and domain-only formats</p>
+                </div>
+                <div class="feature-card new">
+                    <div class="feature-icon">🧹</div>
+                    <h3>Smart Deduplication</h3>
+                    <p>Removes duplicate entries automatically before saving</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Universal Script</h3>
+                    <p>Single script works on Linux and OpenWrt with auto-detection</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>POSIX Compliant</h3>
+                    <p>Pure /bin/sh - works on busybox, no bash required</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>CLI Commands</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                Helium supports command-line arguments for scripting and automation:
+            </p>
+            <table class="cli-table">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>helium</td>
+                        <td>Interactive menu</td>
+                    </tr>
+                    <tr>
+                        <td>helium --update</td>
+                        <td>Update blocklist database</td>
+                    </tr>
+                    <tr>
+                        <td>helium --upgrade</td>
+                        <td>Update Helium script from repository</td>
+                    </tr>
+                    <tr>
+                        <td>helium --status</td>
+                        <td>Show current status</td>
+                    </tr>
+                    <tr>
+                        <td>helium --version</td>
+                        <td>Show version</td>
+                    </tr>
+                    <tr>
+                        <td>helium --help</td>
+                        <td>Show help</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Manual Cron Setup</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                Set up automatic daily updates manually using these commands:
+            </p>
+
+            <div class="cron-section">
+                <div class="cron-platform">
+                    <h4>Linux (Debian/Ubuntu/RHEL)</h4>
+                    <div class="code-block small">
+                        <code><span class="comment"># Daily blocklist update at 4 AM</span>
+echo "0 4 * * * root /usr/local/sbin/helium --update" | sudo tee -a /etc/crontab
+
+<span class="comment"># Weekly script upgrade (optional)</span>
+echo "0 5 * * 0 root /usr/local/sbin/helium --upgrade" | sudo tee -a /etc/crontab</code>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                </div>
+
+                <div class="cron-platform">
+                    <h4>OpenWrt</h4>
+                    <div class="code-block small">
+                        <code><span class="comment"># Daily blocklist update at 4 AM</span>
+echo "0 4 * * * /usr/sbin/helium --update" >> /etc/crontabs/root
+
+<span class="comment"># Weekly script upgrade (optional)</span>
+echo "0 5 * * 0 /usr/sbin/helium --upgrade" >> /etc/crontabs/root
+
+<span class="comment"># Restart cron service</span>
+/etc/init.d/cron restart</code>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <strong>Note:</strong> Helium automatically sets up cron during installation.
+                Use manual setup only if you need custom scheduling or the auto-setup didn't work.
+            </div>
+        </section>
+
+        <section>
+            <h2>Features</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🚫</div>
@@ -410,7 +619,7 @@
         </section>
 
         <section>
-            <h2>📊 Platform Comparison</h2>
+            <h2>Platform Comparison</h2>
             <table class="platform-table">
                 <thead>
                     <tr>
@@ -436,6 +645,16 @@
                         <td class="check">✓</td>
                     </tr>
                     <tr>
+                        <td>CLI Commands</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Auto Daily Update</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
                         <td>Change DNS Server</td>
                         <td class="check">✓</td>
                         <td class="cross">—</td>
@@ -450,17 +669,12 @@
                         <td class="cross">—</td>
                         <td class="check">✓</td>
                     </tr>
-                    <tr>
-                        <td>Auto Daily Update</td>
-                        <td class="check">✓</td>
-                        <td class="cross">—</td>
-                    </tr>
                 </tbody>
             </table>
         </section>
 
         <section>
-            <h2>🖥️ Supported Platforms</h2>
+            <h2>Supported Platforms</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🐧</div>
