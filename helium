@@ -909,30 +909,106 @@ do_update_database() {
 # FEATURE: PROVIDER MANAGEMENT
 # -----------------------------------------------------------------------------
 
+# Parse provider line and extract components
+# Format: NAME|CATEGORY|REGION|TAGS|DESCRIPTION="URL"
+# Or legacy: NAME="URL"
+parse_provider_line() {
+    line="$1"
+    is_active=1
+
+    # Check if commented
+    case "$line" in
+        \#*)
+            is_active=0
+            line=$(echo "$line" | sed 's/^#//')
+            ;;
+    esac
+
+    # Check if new format (contains |)
+    if echo "$line" | grep -q '|'; then
+        P_NAME=$(echo "$line" | cut -d'|' -f1)
+        P_CATEGORY=$(echo "$line" | cut -d'|' -f2)
+        P_REGION=$(echo "$line" | cut -d'|' -f3)
+        P_TAGS=$(echo "$line" | cut -d'|' -f4)
+        P_DESC=$(echo "$line" | cut -d'|' -f5 | cut -d'=' -f1)
+    else
+        # Legacy format
+        P_NAME=$(echo "$line" | cut -d'=' -f1)
+        P_CATEGORY="Legacy"
+        P_REGION="📦"
+        P_TAGS=""
+        P_DESC=""
+    fi
+
+    P_ACTIVE=$is_active
+}
+
 show_providers_list() {
     tmp_file="${PROVIDERS_FILE}.tmp"
     [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
 
-    printf " ${WHITE}%-30s %12s${NOCOLOR}\n" "PROVIDER" "STATUS"
-    echo " ------------------------------------------"
+    current_category=""
+    active_count=0
+    inactive_count=0
 
+    # First pass: count active/inactive
     while IFS= read -r line || [ -n "$line" ]; do
-        [ -z "$line" ] && continue
-
-        # Check if commented (inactive)
         case "$line" in
-            \#*)
-                provider_name=$(echo "$line" | sed 's/^#//' | cut -d'=' -f1)
-                printf " %-30s " "$provider_name"
-                println_red "inactive"
-                ;;
-            *)
-                provider_name=$(echo "$line" | cut -d'=' -f1)
-                printf " %-30s " "$provider_name"
-                println_green "active"
+            \#\#*|"#"|"") continue ;;  # Skip section headers and empty
+            \#*=*|*=*)
+                case "$line" in
+                    \#*) inactive_count=$((inactive_count + 1)) ;;
+                    *) active_count=$((active_count + 1)) ;;
+                esac
                 ;;
         esac
     done < "$tmp_file"
+
+    printf " ${WHITE}Providers: ${GREEN}%d active${NOCOLOR} / ${RED}%d inactive${NOCOLOR}\n" "$active_count" "$inactive_count"
+    echo " ══════════════════════════════════════════════════════════════════"
+    printf " ${WHITE}%-3s %-20s %-8s %-4s %-28s${NOCOLOR}\n" "ST" "NAME" "CATEGORY" "REG" "DESCRIPTION"
+    echo " ──────────────────────────────────────────────────────────────────"
+
+    # Second pass: display providers
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip pure comments (section headers) and empty lines
+        case "$line" in
+            ""|"# "*|"#-"*|"#="*|"# =="*) continue ;;
+        esac
+
+        # Only process lines with = (provider definitions)
+        case "$line" in
+            *"="*)
+                parse_provider_line "$line"
+
+                # Truncate long names/descriptions
+                disp_name=$(echo "$P_NAME" | cut -c1-20)
+                disp_cat=$(echo "$P_CATEGORY" | cut -c1-8)
+                disp_desc=$(echo "$P_DESC" | cut -c1-28)
+
+                if [ "$P_ACTIVE" = "1" ]; then
+                    printf " ${GREEN}%-3s${NOCOLOR} %-20s %-8s %-4s %-28s\n" "[✓]" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
+                else
+                    printf " ${RED}%-3s${NOCOLOR} ${WHITE}%-20s${NOCOLOR} %-8s %-4s %-28s\n" "[ ]" "$disp_name" "$disp_cat" "$P_REGION" "$disp_desc"
+                fi
+                ;;
+        esac
+    done < "$tmp_file"
+
+    echo " ──────────────────────────────────────────────────────────────────"
+}
+
+show_providers_by_category() {
+    tmp_file="${PROVIDERS_FILE}.tmp"
+    [ ! -f "$tmp_file" ] && cp "$PROVIDERS_FILE" "$tmp_file"
+
+    printf " ${WHITE}Filter by Category:${NOCOLOR}\n"
+    echo " [1] All          [5] Security    [9] Torrent"
+    echo " [2] Global       [6] Privacy     [10] Scam"
+    echo " [3] Asia         [7] Social      [11] Device"
+    echo " [4] Europe       [8] Crypto      [12] Curated"
+    echo
+    printf " Enter filter [1-12] or provider name: "
 }
 
 do_activate_provider() {
@@ -955,9 +1031,10 @@ do_activate_provider() {
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
-        printf " Select provider to activate (s=save, c=cancel): "
+        printf " ${YELLOW}[Unsaved changes]${NOCOLOR}\n"
+        printf " Type provider name to activate, ${GREEN}s${NOCOLOR}=save, ${RED}c${NOCOLOR}=cancel: "
     else
-        printf " Select provider to activate (c=cancel): "
+        printf " Type provider name to activate (${RED}c${NOCOLOR}=cancel): "
     fi
     read -r selection
 
@@ -979,14 +1056,22 @@ do_activate_provider() {
             return
             ;;
         *)
-            # Try to activate the provider
-            if grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
+            # Try to activate the provider (handle both new and legacy formats)
+            # New format: #NAME|... or NAME|...
+            # Legacy format: #NAME=... or NAME=...
+            if grep -q "^#${selection}|" "$tmp_file" 2>/dev/null; then
+                sed -i "s/^#${selection}|/${selection}|/" "$tmp_file"
+                printf " ${GREEN}✓${NOCOLOR} %s activated\n" "$selection"
+                sleep 1
+            elif grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
                 sed -i "s/^#${selection}=/${selection}=/" "$tmp_file"
-            elif grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
-                printf " %s is already active\n" "$selection"
+                printf " ${GREEN}✓${NOCOLOR} %s activated\n" "$selection"
+                sleep 1
+            elif grep -q "^${selection}|" "$tmp_file" 2>/dev/null || grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
+                printf " ${YELLOW}!${NOCOLOR} %s is already active\n" "$selection"
                 sleep 1
             else
-                printf " %s is not in the list\n" "$selection"
+                printf " ${RED}✗${NOCOLOR} %s not found in providers list\n" "$selection"
                 sleep 1
             fi
             do_activate_provider
@@ -1014,9 +1099,10 @@ do_deactivate_provider() {
 
     # Check for changes
     if [ -f "$tmp_file" ] && ! diff -q "$tmp_file" "$PROVIDERS_FILE" >/dev/null 2>&1; then
-        printf " Select provider to deactivate (s=save, c=cancel): "
+        printf " ${YELLOW}[Unsaved changes]${NOCOLOR}\n"
+        printf " Type provider name to deactivate, ${GREEN}s${NOCOLOR}=save, ${RED}c${NOCOLOR}=cancel: "
     else
-        printf " Select provider to deactivate (c=cancel): "
+        printf " Type provider name to deactivate (${RED}c${NOCOLOR}=cancel): "
     fi
     read -r selection
 
@@ -1038,14 +1124,22 @@ do_deactivate_provider() {
             return
             ;;
         *)
-            # Try to deactivate the provider
-            if grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
+            # Try to deactivate the provider (handle both new and legacy formats)
+            # New format: NAME|... → #NAME|...
+            # Legacy format: NAME=... → #NAME=...
+            if grep -q "^${selection}|" "$tmp_file" 2>/dev/null; then
+                sed -i "s/^${selection}|/#${selection}|/" "$tmp_file"
+                printf " ${RED}✗${NOCOLOR} %s deactivated\n" "$selection"
+                sleep 1
+            elif grep -q "^${selection}=" "$tmp_file" 2>/dev/null; then
                 sed -i "s/^${selection}=/#${selection}=/" "$tmp_file"
-            elif grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
-                printf " %s is already inactive\n" "$selection"
+                printf " ${RED}✗${NOCOLOR} %s deactivated\n" "$selection"
+                sleep 1
+            elif grep -q "^#${selection}|" "$tmp_file" 2>/dev/null || grep -q "^#${selection}=" "$tmp_file" 2>/dev/null; then
+                printf " ${YELLOW}!${NOCOLOR} %s is already inactive\n" "$selection"
                 sleep 1
             else
-                printf " %s is not in the list\n" "$selection"
+                printf " ${RED}✗${NOCOLOR} %s not found in providers list\n" "$selection"
                 sleep 1
             fi
             do_deactivate_provider
