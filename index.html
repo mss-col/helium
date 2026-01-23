@@ -392,6 +392,168 @@
             display: none;
         }
 
+        /* Donate Button - Floating */
+        .donate-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+            font-family: inherit;
+        }
+
+        .donate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(245, 158, 11, 0.5);
+        }
+
+        .donate-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .modal-close:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .modal-close svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .modal-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .qr-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            display: inline-block;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 3px var(--accent);
+        }
+
+        .qr-container img {
+            display: block;
+            width: 180px;
+            height: 180px;
+            border-radius: 8px;
+        }
+
+        .qr-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .qr-label span {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .modal-footer {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .modal-footer p {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .modal-footer .heart {
+            color: #ef4444;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 1rem;
@@ -413,6 +575,23 @@
             .cli-table td:first-child {
                 font-size: 0.8rem;
             }
+
+            .donate-btn {
+                bottom: 16px;
+                right: 16px;
+                padding: 12px 20px;
+                font-size: 0.85rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .qr-container img {
+                width: 160px;
+                height: 160px;
+            }
         }
     </style>
 </head>
@@ -423,7 +602,7 @@
             <h1>Helium</h1>
             <p class="tagline">Universal DNS-based Ad Blocker</p>
             <div class="badges">
-                <span class="badge version">v4.0.0</span>
+                <span class="badge version">v4.1.5</span>
                 <span class="badge">Linux</span>
                 <span class="badge">OpenWrt</span>
                 <span class="badge">POSIX Shell</span>
@@ -720,6 +899,40 @@ echo "0 5 * * 0 /usr/sbin/helium --upgrade" >> /etc/crontabs/root
         </footer>
     </div>
 
+    <!-- Floating Donate Button -->
+    <button class="donate-btn" onclick="openDonateModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        Support
+    </button>
+
+    <!-- Donate Modal -->
+    <div class="modal-overlay" id="donateModal" onclick="closeDonateModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeDonateModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+
+            <div class="modal-icon">☕</div>
+            <h2 class="modal-title">Support Helium</h2>
+            <p class="modal-subtitle">Help keep Helium free and maintained. Your support funds development and server costs.</p>
+
+            <div class="qr-container">
+                <img src="cm_qr.jpg" alt="Donation QR Code">
+            </div>
+
+            <p class="qr-label">Scan with your <span>banking app</span></p>
+
+            <div class="modal-footer">
+                <p>Thank you! <span class="heart">❤</span></p>
+            </div>
+        </div>
+    </div>
+
     <script>
         function showTab(tab) {
             // Hide all tabs
@@ -742,6 +955,24 @@ echo "0 5 * * 0 /usr/sbin/helium --upgrade" >> /etc/crontabs/root
                 }, 2000);
             });
         }
+
+        function openDonateModal() {
+            document.getElementById('donateModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDonateModal(event) {
+            if (!event || event.target === document.getElementById('donateModal')) {
+                document.getElementById('donateModal').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDonateModal();
+            }
+        });
     </script>
 </body>
 </html>
