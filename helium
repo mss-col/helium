@@ -791,8 +791,15 @@ update_engine() {
         if (!skip) print
     }' > "$ADBLOCK_HOSTS"
 
-    # Add IPv6 entries if IPv6 is enabled (use :: not ::1)
-    if ip a 2>/dev/null | grep -q "inet6"; then
+    # Add IPv6 entries if IPv6 blocking is enabled
+    # Check config file first, then fallback to system IPv6 detection
+    ipv6_blocking=1
+    if [ -f "$DNSMASQ_DIR/helium.conf" ]; then
+        config_value=$(grep "^IPV6_BLOCKING=" "$DNSMASQ_DIR/helium.conf" 2>/dev/null | cut -d'=' -f2)
+        [ "$config_value" = "0" ] && ipv6_blocking=0
+    fi
+
+    if [ "$ipv6_blocking" = "1" ] && { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep -q "scope global"; }; then
         sed 's/^0\.0\.0\.0/::/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
         cat "$ADBLOCK_HOSTS" "$ADBLOCK_HOSTS.tmp" > "$ADBLOCK_HOSTS.merged"
         mv "$ADBLOCK_HOSTS.merged" "$ADBLOCK_HOSTS"
@@ -1974,7 +1981,7 @@ do_toggle_ipv6() {
     print_header
     echo
 
-    if ! ip a 2>/dev/null | grep -q "inet6"; then
+    if ! { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep -q "scope global"; }; then
         printf " IPv6 is currently: "
         println_red "disabled"
         echo
