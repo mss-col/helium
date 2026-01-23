@@ -799,7 +799,7 @@ update_engine() {
         [ "$config_value" = "0" ] && ipv6_blocking=0
     fi
 
-    if [ "$ipv6_blocking" = "1" ] && { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep -q "scope global"; }; then
+    if [ "$ipv6_blocking" = "1" ] && { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep "scope global" | grep -v " fd" | grep -qv " fc"; }; then
         sed 's/^0\.0\.0\.0/::/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
         cat "$ADBLOCK_HOSTS" "$ADBLOCK_HOSTS.tmp" > "$ADBLOCK_HOSTS.merged"
         mv "$ADBLOCK_HOSTS.merged" "$ADBLOCK_HOSTS"
@@ -1981,7 +1981,7 @@ do_toggle_ipv6() {
     print_header
     echo
 
-    if ! { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep -q "scope global"; }; then
+    if ! { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep "scope global" | grep -v " fd" | grep -qv " fc"; }; then
         printf " IPv6 is currently: "
         println_red "disabled"
         echo
