@@ -616,6 +616,7 @@
                 <button class="tab-btn active" onclick="showTab('linux')">Linux Server</button>
                 <button class="tab-btn" onclick="showTab('openwrt')">OpenWrt Router</button>
                 <button class="tab-btn" onclick="showTab('universal')">Universal</button>
+                <button class="tab-btn" onclick="showTab('luci')">LuCI WebUI</button>
             </div>
 
             <div id="linux-tab" class="tab-content">
@@ -639,6 +640,25 @@
                 </div>
                 <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
                     Auto-detects OS and installs to correct path
+                </p>
+            </div>
+
+            <div id="luci-tab" class="tab-content hidden">
+                <h3 style="margin-bottom: 1rem;">Option 1: Add Repository (Recommended)</h3>
+                <div class="code-block">
+                    <code>echo "src/gz helium https://raw.githubusercontent.com/mss-col/openwrt-packages/main/packages/all" >> /etc/opkg/customfeeds.conf && opkg update && opkg install luci-app-helium</code>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+
+                <h3 style="margin-bottom: 1rem; margin-top: 1.5rem;">Option 2: Direct Download</h3>
+                <div class="code-block">
+                    <code>wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_1.0.0-1_all.ipk && opkg install /tmp/luci-app-helium.ipk</code>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+
+                <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                    <strong>Note:</strong> Install Helium core first (OpenWrt tab), then add the web interface.<br>
+                    After installation, access from <strong>Services → Helium</strong> in LuCI.
                 </p>
             </div>
         </section>

@@ -46,6 +46,22 @@ chmod +x /usr/sbin/helium
 helium
 ```
 
+### LuCI Web Interface (Optional)
+
+Install the web UI for managing Helium from OpenWrt's LuCI interface.
+
+**Option 1: Add Repository (Recommended)**
+```bash
+echo "src/gz helium https://raw.githubusercontent.com/mss-col/openwrt-packages/main/packages/all" >> /etc/opkg/customfeeds.conf && opkg update && opkg install luci-app-helium
+```
+
+**Option 2: Direct Download**
+```bash
+wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_1.0.0-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
+```
+
+After installation, access Helium from **Services → Helium** in LuCI.
+
 ## Features
 
 | Feature | Linux | OpenWrt |
