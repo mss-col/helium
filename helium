@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.1.4"
+VERSION_NUMBER="4.1.5"
 VERSION_SUFFIX="Universal"
 
 # Paths
@@ -124,26 +124,26 @@ clear_screen() {
 # Print modern header with ASCII art
 print_header() {
     printf "\n"
-    printf " ${HE_ACCENT}╭─────────────────────────────────────────────────────────────────╮${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██╗  ██╗███████╗██╗     ██╗██╗   ██╗███╗   ███╗${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██║  ██║██╔════╝██║     ██║██║   ██║████╗ ████║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}███████║█████╗  ██║     ██║██║   ██║██╔████╔██║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██╔══██║██╔══╝  ██║     ██║██║   ██║██║╚██╔╝██║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██║  ██║███████╗███████╗██║╚██████╔╝██║ ╚═╝ ██║${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}╚═╝  ╚═╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝     ╚═╝${NOCOLOR}            ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_MUTED}🛡️  Universal DNS-based Ad Blocker${NOCOLOR}                         ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}╭───────────────────────────────────────────────────────────────────${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██╗  ██╗███████╗██╗     ██╗██╗   ██╗███╗   ███╗${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██║  ██║██╔════╝██║     ██║██║   ██║████╗ ████║${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}███████║█████╗  ██║     ██║██║   ██║██╔████╔██║${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██╔══██║██╔══╝  ██║     ██║██║   ██║██║╚██╔╝██║${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}██║  ██║███████╗███████╗██║╚██████╔╝██║ ╚═╝ ██║${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_HEADER}╚═╝  ╚═╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝     ╚═╝${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}   ${HE_MUTED}🛡  Universal DNS-based Ad Blocker${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}\n"
     printf " ${HE_ACCENT}│${NOCOLOR}   ${BG_SUCCESS}${WHITE} v${VERSION_NUMBER} ${NOCOLOR}"
     if [ "$OS_TYPE" = "openwrt" ]; then
         printf " ${BG_INFO}${WHITE} OpenWrt ${NOCOLOR}"
     else
         printf " ${BG_INFO}${WHITE} Linux ${NOCOLOR}"
     fi
-    printf " ${HE_MUTED}by Abi Darwish & MSS${NOCOLOR}                    ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}│${NOCOLOR}                                                                 ${HE_ACCENT}│${NOCOLOR}\n"
-    printf " ${HE_ACCENT}╰─────────────────────────────────────────────────────────────────╯${NOCOLOR}\n"
+    printf " ${HE_MUTED}by Abi Darwish & MSS${NOCOLOR}\n"
+    printf " ${HE_ACCENT}│${NOCOLOR}\n"
+    printf " ${HE_ACCENT}╰───────────────────────────────────────────────────────────────────${NOCOLOR}\n"
 }
 
 # Print section header
@@ -2179,7 +2179,7 @@ main_menu() {
             print_menu_row "🟢" "1" "Start Helium"        "🚫" "7"  "Blacklist Host"
             print_menu_row "🔴" "2" "Stop Helium"         "🔄" "8"  "Toggle IPv6"
             print_menu_row "📥" "3" "Update Database"     "📤" "9"  "Update Helium"
-            print_menu_row "➕" "4" "Activate Provider"   "🗑" "10" "Uninstall"
+            print_menu_row "➕" "4" "Activate Provider"   "🗑 " "10" "Uninstall"
             print_menu_row "➖" "5" "Deactivate Provider" "🚪" "11" "Exit"
             print_menu_row "⭐" "6" "Whitelist Host"      ""   ""   ""
         else
@@ -2188,7 +2188,7 @@ main_menu() {
             print_menu_row "🔴" "2" "Stop Helium"         "🌐" "8"  "Change DNS"
             print_menu_row "📥" "3" "Update Database"     "🧹" "9"  "Clean Database"
             print_menu_row "➕" "4" "Activate Provider"   "📤" "10" "Update Helium"
-            print_menu_row "➖" "5" "Deactivate Provider" "🗑" "11" "Uninstall"
+            print_menu_row "➖" "5" "Deactivate Provider" "🗑 " "11" "Uninstall"
             print_menu_row "⭐" "6" "Whitelist Host"      "🚪" "12" "Exit"
         fi
 
