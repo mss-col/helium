@@ -10,7 +10,7 @@
 # CONFIGURATION
 # -----------------------------------------------------------------------------
 VERSION_NAME="Helium"
-VERSION_NUMBER="4.1.5"
+VERSION_NUMBER="4.1.6"
 VERSION_SUFFIX="Universal"
 
 # Paths
