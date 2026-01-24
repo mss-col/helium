@@ -57,7 +57,7 @@ echo "src/gz helium https://raw.githubusercontent.com/mss-col/openwrt-packages/m
 
 **Option 2: Direct Download**
 ```bash
-wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_1.1.0-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
+wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_1.1.1-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
 ```
 
 After installation, access Helium from **Services → Helium** in LuCI.
