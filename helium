@@ -806,6 +806,9 @@ update_engine() {
         rm -f "$ADBLOCK_HOSTS.tmp"
     fi
 
+    # Ensure dnsmasq can read the blocklist (runs as non-root user)
+    chmod 644 "$ADBLOCK_HOSTS"
+
     printf "${HE_SUCCESS}✓${NOCOLOR}\n"
 
     # Whitelist already applied above, show message if it was used
