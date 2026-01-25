@@ -1,10 +1,15 @@
 # Helium
 
-[![Version](https://img.shields.io/badge/version-4.0.0-green.svg)](https://github.com/mss-col/helium)
+[![Version](https://img.shields.io/badge/version-4.2.0-green.svg)](https://github.com/mss-col/helium)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20OpenWrt-lightgrey.svg)](https://github.com/mss-col/helium)
 
 **Helium** is a universal DNS-based ad blocker that works on both Linux servers and OpenWrt routers. It uses dnsmasq to block ads, trackers, malware, phishing, and more.
+
+## What's New in v4.2.0
+
+- **Kernel-based IPv6 Detection** - IPv6 blocklist entries now based on kernel setting (`/proc/sys/net/ipv6/conf/all/disable_ipv6`) instead of network interface detection
+- **Consistent IPv6 Toggle** - Matches LuCI web interface toggle behavior for accurate blocklist generation
 
 ## What's New in v4.0.0
 
