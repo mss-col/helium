@@ -221,6 +221,56 @@ download_file() {
     return 1
 }
 
+# Get storage information for overlay filesystem (OpenWrt)
+# Returns: available_kb used_kb total_kb
+get_storage_info() {
+    # Get overlay storage info (used for /etc on OpenWrt)
+    storage_line=$(df 2>/dev/null | grep -E 'overlay|/dev/root' | head -1)
+    if [ -n "$storage_line" ]; then
+        # df output: Filesystem Size Used Available Use% Mounted
+        # Columns: $2=total $3=used $4=available (all in KB)
+        total_kb=$(echo "$storage_line" | awk '{print $2}')
+        used_kb=$(echo "$storage_line" | awk '{print $3}')
+        available_kb=$(echo "$storage_line" | awk '{print $4}')
+        echo "$available_kb $used_kb $total_kb"
+    else
+        # Fallback: check root filesystem
+        storage_line=$(df / 2>/dev/null | tail -1)
+        total_kb=$(echo "$storage_line" | awk '{print $2}')
+        used_kb=$(echo "$storage_line" | awk '{print $3}')
+        available_kb=$(echo "$storage_line" | awk '{print $4}')
+        echo "$available_kb $used_kb $total_kb"
+    fi
+}
+
+# Check if storage is sufficient for a file
+# Usage: check_storage_for_file <file_path>
+# Returns: 0 if OK, 1 if insufficient storage
+check_storage_for_file() {
+    file_to_check="$1"
+
+    if [ ! -f "$file_to_check" ]; then
+        return 0  # File doesn't exist, nothing to check
+    fi
+
+    # Get file size in KB
+    file_size_bytes=$(stat -c%s "$file_to_check" 2>/dev/null || stat -f%z "$file_to_check" 2>/dev/null)
+    file_size_kb=$((file_size_bytes / 1024))
+
+    # Get available storage
+    storage_info=$(get_storage_info)
+    available_kb=$(echo "$storage_info" | awk '{print $1}')
+
+    # Add 10% safety margin
+    required_kb=$((file_size_kb + (file_size_kb / 10)))
+
+    if [ "$available_kb" -lt "$required_kb" ]; then
+        return 1  # Insufficient storage
+    fi
+
+    return 0  # Storage OK
+}
+
 # Get public IP address
 get_public_ip() {
     ip -4 addr 2>/dev/null | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | awk '{print $1}' | head -1
@@ -773,6 +823,9 @@ update_engine() {
         whitelist_pattern=$(cat "$WHITELIST_FILE" | grep -v '^$' | tr '\n' '|' | sed 's/|$//')
     fi
 
+    # Process to temp file in RAM first (for storage check)
+    TEMP_ADBLOCK="/tmp/adblock.hosts.tmp"
+
     # Sort, deduplicate, clean invalid entries, and apply whitelist in single pass
     sort -u "$TEMP_LIST" 2>/dev/null | awk -v whitelist="$whitelist_pattern" '
     BEGIN { if (whitelist != "") split(whitelist, wl, "|") }
@@ -789,7 +842,7 @@ update_engine() {
             }
         }
         if (!skip) print
-    }' > "$ADBLOCK_HOSTS"
+    }' > "$TEMP_ADBLOCK"
 
     # Add IPv6 entries if IPv6 is enabled at kernel level
     # Check /proc/sys/net/ipv6/conf/all/disable_ipv6: 0 = enabled, 1 = disabled
@@ -799,11 +852,33 @@ update_engine() {
     fi
 
     if [ "$ipv6_enabled" = "1" ]; then
-        sed 's/^0\.0\.0\.0/::/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
-        cat "$ADBLOCK_HOSTS" "$ADBLOCK_HOSTS.tmp" > "$ADBLOCK_HOSTS.merged"
-        mv "$ADBLOCK_HOSTS.merged" "$ADBLOCK_HOSTS"
-        rm -f "$ADBLOCK_HOSTS.tmp"
+        sed 's/^0\.0\.0\.0/::/' "$TEMP_ADBLOCK" >> "$TEMP_ADBLOCK.v6"
+        cat "$TEMP_ADBLOCK" "$TEMP_ADBLOCK.v6" > "$TEMP_ADBLOCK.merged"
+        mv "$TEMP_ADBLOCK.merged" "$TEMP_ADBLOCK"
+        rm -f "$TEMP_ADBLOCK.v6"
     fi
+
+    # Storage check before writing to persistent storage
+    if [ -f "$TEMP_ADBLOCK" ]; then
+        file_size_bytes=$(stat -c%s "$TEMP_ADBLOCK" 2>/dev/null || stat -f%z "$TEMP_ADBLOCK" 2>/dev/null)
+        file_size_kb=$((file_size_bytes / 1024))
+        storage_info=$(get_storage_info)
+        available_kb=$(echo "$storage_info" | awk '{print $1}')
+        required_kb=$((file_size_kb + (file_size_kb / 10)))  # 10% safety margin
+
+        if [ "$available_kb" -lt "$required_kb" ]; then
+            printf "${RED}✗${NOCOLOR}\n"
+            printf " ${HE_BORDER}│${NOCOLOR}  ${RED}ERROR: Insufficient storage!${NOCOLOR}\n"
+            printf " ${HE_BORDER}│${NOCOLOR}  ${HE_MUTED}Required: %s KB, Available: %s KB${NOCOLOR}\n" "$required_kb" "$available_kb"
+            printf " ${HE_BORDER}│${NOCOLOR}  ${HE_WARNING}Blocklist not updated to prevent storage issues${NOCOLOR}\n"
+            rm -f "$TEMP_ADBLOCK" "$TEMP_LIST"
+            printf " ${HE_BORDER}╰──${NOCOLOR} ${RED}✗${NOCOLOR} Update aborted due to storage limitation\n\n"
+            return 1
+        fi
+    fi
+
+    # Storage OK - move temp file to final location
+    mv "$TEMP_ADBLOCK" "$ADBLOCK_HOSTS"
 
     # Ensure dnsmasq can read the blocklist (runs as non-root user)
     chmod 644 "$ADBLOCK_HOSTS"
