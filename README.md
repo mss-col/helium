@@ -57,10 +57,16 @@ echo "src/gz helium https://raw.githubusercontent.com/mss-col/openwrt-packages/m
 
 **Option 2: Direct Download**
 ```bash
-wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_1.1.2-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
+wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_1.2.0-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
 ```
 
 After installation, access Helium from **Services → Helium** in LuCI.
+
+**LuCI Features:**
+- Dual UI support (JS view for modern OpenWrt, HTM template for QWRT)
+- Automatic dark mode support (follows system preference)
+- Real-time status updates and provider management
+- Whitelist/Blacklist management with instant feedback
 
 ## Features
 
