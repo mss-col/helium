@@ -791,15 +791,14 @@ update_engine() {
         if (!skip) print
     }' > "$ADBLOCK_HOSTS"
 
-    # Add IPv6 entries if IPv6 blocking is enabled
-    # Check config file first, then fallback to system IPv6 detection
-    ipv6_blocking=1
-    if [ -f "$DNSMASQ_DIR/helium.conf" ]; then
-        config_value=$(grep "^IPV6_BLOCKING=" "$DNSMASQ_DIR/helium.conf" 2>/dev/null | cut -d'=' -f2)
-        [ "$config_value" = "0" ] && ipv6_blocking=0
+    # Add IPv6 entries if IPv6 is enabled at kernel level
+    # Check /proc/sys/net/ipv6/conf/all/disable_ipv6: 0 = enabled, 1 = disabled
+    ipv6_enabled=0
+    if [ "$(cat /proc/sys/net/ipv6/conf/all/disable_ipv6 2>/dev/null)" = "0" ]; then
+        ipv6_enabled=1
     fi
 
-    if [ "$ipv6_blocking" = "1" ] && { ip -6 route 2>/dev/null | grep -q "^default" || ip -6 addr 2>/dev/null | grep "scope global" | grep -v " fd" | grep -qv " fc"; }; then
+    if [ "$ipv6_enabled" = "1" ]; then
         sed 's/^0\.0\.0\.0/::/' "$ADBLOCK_HOSTS" >> "$ADBLOCK_HOSTS.tmp"
         cat "$ADBLOCK_HOSTS" "$ADBLOCK_HOSTS.tmp" > "$ADBLOCK_HOSTS.merged"
         mv "$ADBLOCK_HOSTS.merged" "$ADBLOCK_HOSTS"
