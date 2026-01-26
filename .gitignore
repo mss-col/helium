@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Build/test outputs
+build/
+dist/
+*.ipk
+
+# Private credentials (NEVER commit)
+.secrets
+*.secret
+
+# Local testing
+test/
+*.local
