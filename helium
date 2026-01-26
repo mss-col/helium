@@ -224,23 +224,9 @@ download_file() {
 # Get storage information for overlay filesystem (OpenWrt)
 # Returns: available_kb used_kb total_kb
 get_storage_info() {
-    # Get overlay storage info (used for /etc on OpenWrt)
-    storage_line=$(df 2>/dev/null | grep -E 'overlay|/dev/root' | head -1)
-    if [ -n "$storage_line" ]; then
-        # df output: Filesystem Size Used Available Use% Mounted
-        # Columns: $2=total $3=used $4=available (all in KB)
-        total_kb=$(echo "$storage_line" | awk '{print $2}')
-        used_kb=$(echo "$storage_line" | awk '{print $3}')
-        available_kb=$(echo "$storage_line" | awk '{print $4}')
-        echo "$available_kb $used_kb $total_kb"
-    else
-        # Fallback: check root filesystem
-        storage_line=$(df / 2>/dev/null | tail -1)
-        total_kb=$(echo "$storage_line" | awk '{print $2}')
-        used_kb=$(echo "$storage_line" | awk '{print $3}')
-        available_kb=$(echo "$storage_line" | awk '{print $4}')
-        echo "$available_kb $used_kb $total_kb"
-    fi
+    # OpenWrt always uses overlay for writable storage (internal or extroot)
+    # df output: Filesystem 1K-blocks Used Available Use% Mounted
+    df -k 2>/dev/null | grep overlay | head -1 | awk '{print $4, $3, $2}'
 }
 
 # Check if storage is sufficient for a file
