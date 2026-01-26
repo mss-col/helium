@@ -30,3 +30,4 @@ dist/
 # Local testing
 test/
 *.local
+CLAUDE.md
