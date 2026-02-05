@@ -1,10 +1,16 @@
 # Helium
 
-[![Version](https://img.shields.io/badge/version-4.2.3-green.svg)](https://github.com/mss-col/helium)
+[![Version](https://img.shields.io/badge/version-4.2.4-green.svg)](https://github.com/mss-col/helium)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20OpenWrt-lightgrey.svg)](https://github.com/mss-col/helium)
 
 **Helium** is a universal DNS-based ad blocker that works on both Linux servers and OpenWrt routers. It uses dnsmasq to block ads, trackers, malware, phishing, and more.
+
+## What's New in v4.2.4
+
+- **Fixed QWRT LuCI Crash** - Controller now uses pcall protection to prevent breaking entire LuCI webui
+- **Fixed Package Repository** - opkg repository works correctly with `opkg install luci-app-helium`
+- **Improved Compatibility** - Module-level function for older LuCI versions
 
 ## What's New in v4.2.1
 
@@ -67,7 +73,7 @@ echo "src/gz helium https://raw.githubusercontent.com/mss-col/openwrt-packages/m
 
 **Option 2: Direct Download**
 ```bash
-wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_4.2.3-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
+wget -O /tmp/luci-app-helium.ipk https://github.com/mss-col/openwrt-packages/raw/main/packages/all/luci-app-helium_4.2.4-1_all.ipk && opkg install /tmp/luci-app-helium.ipk
 ```
 
 After installation, access Helium from **Services → Helium** in LuCI.
